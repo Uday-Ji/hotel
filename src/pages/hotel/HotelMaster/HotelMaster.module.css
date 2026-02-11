@@ -1,0 +1,23 @@
+.container {
+  width: 100%;
+}
+
+.paper {
+  padding: 2rem;
+  border-radius: 8px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.searchBar {
+  margin-bottom: 1.5rem;
+}
+
+.gridContainer {
+  width: 100%;
+}

@@ -1,0 +1,56 @@
+.dashboardWrapper {
+  min-height: calc(100vh - 64px);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+  /* background: linear-gradient(to right, #4facfe, #00f2fe); */
+  background-attachment: fixed;
+  padding: 1rem 0;
+}
+
+.dashboard {
+  padding-top: 1rem;
+  padding-bottom: 4rem;
+}
+
+.gridContainer {
+  margin-top: 0.5rem;
+}
+
+.moduleCard {
+  cursor: pointer;
+  background: #fff;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.cardContent {
+  padding: 2.5rem 1.5rem !important;
+  text-align: center;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.iconWrapper {
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.moduleTitle {
+  text-align: center;
+  line-height: 1.4;
+}
+
+@media (max-width: 960px) {
+  .dashboardWrapper {
+    padding: 2rem 0;
+  }
+
+  .cardContent {
+    min-height: 100px;
+    padding: 2rem 1rem !important;
+  }
+}

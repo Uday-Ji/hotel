@@ -1,0 +1,24 @@
+.drawer {
+  width: 280px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.drawerExpanded {
+  width: 280px;
+  transition: width 0.3s ease;
+}
+
+.drawerCollapsed {
+  width: 80px;
+  transition: width 0.3s ease;
+  overflow-x: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px;
+  min-height: 64px;
+}
