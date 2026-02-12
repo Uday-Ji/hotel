@@ -1,0 +1,40 @@
+.container {
+  width: 100%;
+}
+
+.header {
+  padding: 1rem 2rem;
+  background: linear-gradient(90deg, #f59e0b 0%, #fb923c 100%);
+  border-radius: 0;
+  margin-bottom: 2rem;
+}
+
+.title {
+  color: white;
+  font-weight: 600;
+}
+
+.content {
+  padding: 3rem;
+  text-align: center;
+  border-radius: 8px;
+}
+
+.imageContainer {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.welcomeImage {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.subtitle {
+  color: #9ca3af;
+  font-weight: 500;
+}

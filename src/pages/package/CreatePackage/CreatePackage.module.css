@@ -1,0 +1,21 @@
+.container {
+  width: 100%;
+  padding: 2rem;
+}
+
+.title {
+  margin-bottom: 2rem;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.paper {
+  padding: 3rem;
+  border-radius: 8px;
+}
+
+.formHeader {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}

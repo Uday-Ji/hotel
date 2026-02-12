@@ -4,6 +4,7 @@ import hotelReducer from './slices/hotelSlice';
 import bookingReducer from './slices/bookingSlice';
 import masterReducer from './slices/masterSlice';
 import uiReducer from './slices/uiSlice';
+import packageReducer from './slices/packageSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     booking: bookingReducer,
     master: masterReducer,
     ui: uiReducer,
+    package: packageReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
