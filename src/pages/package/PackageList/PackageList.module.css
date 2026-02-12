@@ -1,0 +1,274 @@
+.pageWrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0;
+}
+
+/* Header Section */
+.headerPaper {
+  background: white;
+  padding: 2rem 3rem;
+  margin-bottom: 2rem;
+  border-radius: 0;
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pageTitle {
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.pageSubtitle {
+  color: #6b7280;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.viewToggle button {
+  padding: 8px 16px;
+}
+
+.createButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  text-transform: none;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 8px;
+}
+
+.createButton:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6b3f8f 100%);
+}
+
+/* Filter Section */
+.filterSection {
+  background: white;
+  padding: 1.5rem 2rem;
+  margin: 0 2rem 1.5rem;
+  border-radius: 12px;
+}
+
+.filterHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.filterIcon {
+  color: #667eea;
+}
+
+.filterTitle {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.filterContent {
+  margin-top: 1rem;
+}
+
+.searchButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-width: 120px;
+  text-transform: none;
+  font-weight: 600;
+}
+
+.searchButton:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6b3f8f 100%);
+}
+
+.resetButton {
+  border-color: #d1d5db;
+  color: #6b7280;
+  text-transform: none;
+  font-weight: 600;
+  min-width: 100px;
+}
+
+/* Results Summary */
+.resultsSummary {
+  padding: 0 2rem 1rem;
+}
+
+.resultsText {
+  color: white;
+  font-size: 0.95rem;
+}
+
+/* Content Area */
+.contentArea {
+  padding: 0 2rem 2rem;
+}
+
+.emptyState {
+  padding: 4rem 2rem;
+  text-align: center;
+  border-radius: 12px;
+}
+
+/* Card View */
+.packageCard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.packageCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.cardHeader {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.packageAvatar {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  width: 48px;
+  height: 48px;
+}
+
+.cardTitleBox {
+  flex: 1;
+  min-width: 0;
+}
+
+.packageTitle {
+  color: white;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.packageCode {
+  color: rgba(255, 255, 255, 0.8);
+  display: block;
+}
+
+.cardBody {
+  flex: 1;
+  padding: 1.5rem !important;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dateInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cardFooter {
+  padding: 1rem 1.5rem !important;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Table View */
+.tableContainer {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tableHeaderCell {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  border: none !important;
+  padding: 1rem !important;
+}
+
+.tableRow {
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background-color: #f9fafb;
+}
+
+.tableRow td {
+  padding: 1rem !important;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .headerPaper {
+    padding: 1.5rem 1rem;
+  }
+
+  .headerContent {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .headerActions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .viewToggle,
+  .createButton {
+    width: 100%;
+  }
+
+  .filterSection {
+    margin: 0 1rem 1.5rem;
+    padding: 1rem;
+  }
+
+  .contentArea,
+  .resultsSummary {
+    padding: 0 1rem 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .cardHeader {
+    padding: 1rem;
+  }
+
+  .cardBody {
+    padding: 1rem !important;
+  }
+
+  .packageTitle {
+    font-size: 0.95rem;
+  }
+}

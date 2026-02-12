@@ -1,2 +1,2 @@
 export * from './common.types';
-export * from './api.types';
+export type { ApiStatus, ApiError } from './api.types';

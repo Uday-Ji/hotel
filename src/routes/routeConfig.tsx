@@ -1,11 +1,12 @@
 import React, { Suspense } from 'react';
-import { RouteObject } from 'react-router-dom';
+import { Navigate, RouteObject } from 'react-router-dom';
 import { CircularProgress, Box } from '@mui/material';
 import AuthLayout from '@/layouts/AuthLayout';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import ModuleLayout from '@/layouts/ModuleLayout';
 import ProtectedRoute from './ProtectedRoute';
 import PublicRoute from './PublicRoute';
+import CreatePackageWizard from '@/pages/package/CreatePackageWizard';
 
 const LoadingFallback = () => (
   <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -36,6 +37,14 @@ const AddEditHotel = Loadable(React.lazy(() => import('@/pages/hotel/AddEditHote
 
 // Page Template for remaining pages
 const PageTemplate = Loadable(React.lazy(() => import('@/pages/PageTemplate')));
+// Package Module
+const PackageList = Loadable(React.lazy(() => import('@/pages/package/PackageList')));
+const PackageWelcome = Loadable(React.lazy(() => import('@/pages/package/Welcome')));
+const CreatePackage = Loadable(React.lazy(() => import('@/pages/package/CreatePackage')));
+const HolidayCategoryTypeMapping = Loadable(React.lazy(() => import('@/pages/package/HolidayCategoryTypeMapping')));
+const TabsType = Loadable(React.lazy(() => import('@/pages/package/TabsType')));
+const FactsType = Loadable(React.lazy(() => import('@/pages/package/FactsType')));
+const HolidayCategoryMaster = Loadable(React.lazy(() => import('@/pages/package/HolidayCategoryMaster')));
 
 export const routes: RouteObject[] = [
   {
@@ -133,7 +142,17 @@ export const routes: RouteObject[] = [
           },
           {
             path: 'package',
-            children: [{ path: 'package-master', element: <PageTemplate /> }],
+            children: [
+              { path: '', element: <Navigate to="package-list" replace /> },
+              { path: 'package-list', element: <PackageList /> },
+              { path: 'welcome', element: <PackageWelcome /> },
+              { path: 'create-package-wizard', element: <CreatePackageWizard /> },
+              { path: 'create-package', element: <CreatePackage /> },
+              { path: 'holiday-category-type-mapping', element: <HolidayCategoryTypeMapping /> },
+              { path: 'tabs-type', element: <TabsType /> },
+              { path: 'facts-type', element: <FactsType /> },
+              { path: 'holiday-category-master', element: <HolidayCategoryMaster /> },
+            ],
           },
           {
             path: 'sightseeing',
