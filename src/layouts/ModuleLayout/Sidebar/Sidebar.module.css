@@ -1,16 +1,16 @@
 .drawer {
-  width: 280px;
+  width: 190px;
   flex-shrink: 0;
   white-space: nowrap;
 }
 
 .drawerExpanded {
-  width: 280px;
+  width: 190px;
   transition: width 0.3s ease;
 }
 
 .drawerCollapsed {
-  width: 80px;
+  width: 60px;
   transition: width 0.3s ease;
   overflow-x: hidden;
 }

@@ -4,7 +4,6 @@ import {
   Grid,
   Card,
   CardContent,
-  CardActions,
   Typography,
   Button,
   TextField,
@@ -16,7 +15,6 @@ import {
   Paper,
   InputAdornment,
   Tooltip,
-  Avatar,
   Table,
   TableBody,
   TableCell,
@@ -24,11 +22,13 @@ import {
   TableHead,
   TableRow,
   Alert,
-  Divider,
   Stack,
   FormControl,
   InputLabel,
   Select,
+  Collapse,
+  Menu,
+  MenuItem as MenuItemMui,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -44,8 +44,7 @@ import {
   CalendarMonth as CalendarIcon,
   Place as PlaceIcon,
   Refresh as RefreshIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { packageService } from '@/services/package/package.service';
@@ -62,12 +61,15 @@ const PackageList: React.FC = () => {
   const [packages, setPackages] = useState<PackageListItem[]>([]);
   const [filteredPackages, setFilteredPackages] = useState<PackageListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [regions, setRegions] = useState<Region[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [holidayCategories, setHolidayCategories] = useState<HolidayCategory[]>([]);
 
-  // Filter states
+  // Menu state
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedPackage, setSelectedPackage] = useState<PackageListItem | null>(null);
+
   const [filters, setFilters] = useState<PackageListRequest>({
     regionId: 0,
     countryIds: '',
@@ -83,10 +85,6 @@ const PackageList: React.FC = () => {
     fetchDropdownData();
     fetchPackages();
   }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [packages, filters.packageName, filters.status]);
 
   const fetchDropdownData = async () => {
     try {
@@ -123,33 +121,25 @@ const PackageList: React.FC = () => {
     }
   };
 
-  const applyFilters = () => {
-    let filtered = [...packages];
-
-    // Search filter
-    if (filters.packageName) {
-      filtered = filtered.filter(
-        (pkg) =>
-          pkg.packageName.toLowerCase().includes(filters.packageName!.toLowerCase()) ||
-          pkg.packageCode.toLowerCase().includes(filters.packageName!.toLowerCase())
-      );
-    }
-
-    // Status filter
-    if (filters.status) {
-      const statusText = filters.status === '1' ? 'Active' : 'Inactive';
-      filtered = filtered.filter((pkg) => pkg.status === statusText);
-    }
-
-    setFilteredPackages(filtered);
-  };
-
   const handleFilterChange = (field: keyof PackageListRequest, value: any) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
-
     if (field === 'regionId' && value > 0) {
       fetchCountries(value);
       setFilters((prev) => ({ ...prev, countryIds: '' }));
+    }
+  };
+
+  const handleQuickSearch = (searchTerm: string) => {
+    handleFilterChange('packageName', searchTerm);
+    if (searchTerm) {
+      const filtered = packages.filter(
+        (pkg) =>
+          pkg.packageName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pkg.packageCode.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredPackages(filtered);
+    } else {
+      setFilteredPackages(packages);
     }
   };
 
@@ -172,35 +162,66 @@ const PackageList: React.FC = () => {
     fetchPackages();
   };
 
-  const getStatusColor = (status: string) => {
-    return status === 'Active' ? 'success' : 'error';
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, pkg: PackageListItem) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+    setSelectedPackage(pkg);
   };
 
-  const getPriceStatusColor = (priceStatus: string) => {
-    switch (priceStatus) {
-      case 'Complete':
-        return 'success';
-      case 'Incomplete':
-        return 'warning';
-      default:
-        return 'default';
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedPackage(null);
+  };
+
+  const handleView = () => {
+    if (selectedPackage) {
+      navigate(`/package/view/${selectedPackage.packageId}`);
     }
+    handleMenuClose();
+  };
+
+  const handleEdit = () => {
+    if (selectedPackage) {
+      navigate(`/package/edit/${selectedPackage.packageId}`);
+    }
+    handleMenuClose();
   };
 
   return (
-    <Box className={styles.pageWrapper}>
-      {/* Header Section */}
-      <Paper className={styles.headerPaper} elevation={0}>
-        <Box className={styles.headerContent}>
-          <Box>
-            <Typography variant="h4" className={styles.pageTitle}>
-              Package Management
+    <Box className={styles.pageContainer}>
+      {/* Professional Header */}
+      <Box className={styles.headerSection}>
+        <Box className={styles.headerMain}>
+          <Box className={styles.titleArea}>
+            <Typography variant="h5" className={styles.mainTitle}>
+              Packages
             </Typography>
-            <Typography variant="body2" className={styles.pageSubtitle}>
-              Manage and view all travel packages
-            </Typography>
+            <Chip label={`${filteredPackages.length} total`} size="small" className={styles.countChip} />
           </Box>
           <Box className={styles.headerActions}>
+            <TextField
+              size="small"
+              placeholder="Search packages..."
+              value={filters.packageName}
+              onChange={(e) => handleQuickSearch(e.target.value)}
+              className={styles.searchInput}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Button
+              variant={showFilters ? 'contained' : 'outlined'}
+              size="small"
+              startIcon={<FilterIcon />}
+              onClick={() => setShowFilters(!showFilters)}
+              className={styles.filterBtn}
+            >
+              Filters
+            </Button>
             <ToggleButtonGroup
               value={viewMode}
               exclusive
@@ -208,14 +229,14 @@ const PackageList: React.FC = () => {
               size="small"
               className={styles.viewToggle}
             >
-              <ToggleButton value="card" aria-label="card view">
+              <ToggleButton value="card">
                 <Tooltip title="Card View">
-                  <CardViewIcon />
+                  <CardViewIcon fontSize="small" />
                 </Tooltip>
               </ToggleButton>
-              <ToggleButton value="list" aria-label="list view">
+              <ToggleButton value="list">
                 <Tooltip title="List View">
-                  <ListViewIcon />
+                  <ListViewIcon fontSize="small" />
                 </Tooltip>
               </ToggleButton>
             </ToggleButtonGroup>
@@ -223,329 +244,252 @@ const PackageList: React.FC = () => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => navigate('/package/create-package-wizard')}
+              size="small"
               className={styles.createButton}
-              size="large"
             >
               Create Package
             </Button>
           </Box>
         </Box>
-      </Paper>
 
-      {/* Filters Section */}
-      <Paper className={styles.filterSection} elevation={1}>
-        <Box className={styles.filterHeader} onClick={() => setShowFilters(!showFilters)}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <FilterIcon className={styles.filterIcon} />
-            <Typography variant="h6" className={styles.filterTitle}>
-              Search Filters
-            </Typography>
-          </Box>
-          <IconButton size="small">
-            {showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </IconButton>
-        </Box>
-
-        {showFilters && (
-          <>
-            <Divider sx={{ my: 2 }} />
-            <Box className={styles.filterContent}>
-              <Grid container spacing={2.5}>
-                {/* Search Input */}
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Search Package"
-                    placeholder="Search by name or code..."
-                    value={filters.packageName}
-                    onChange={(e) => handleFilterChange('packageName', e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon color="action" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-
-                {/* Region Dropdown */}
-                <Grid item xs={12} md={2}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Region</InputLabel>
-                    <Select
-                      value={filters.regionId || 0}
-                      onChange={(e) => handleFilterChange('regionId', Number(e.target.value))}
-                      label="Region"
-                    >
-                      <MenuItem value={0}>All Regions</MenuItem>
-                      {regions.map((region) => (
-                        <MenuItem key={region.regionId} value={region.regionId}>
-                          {region.regionName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {/* Country Dropdown */}
-                <Grid item xs={12} md={2}>
-                  <FormControl fullWidth size="small" disabled={!filters.regionId}>
-                    <InputLabel>Country</InputLabel>
-                    <Select
-                      value={filters.countryIds || ''}
-                      onChange={(e) => handleFilterChange('countryIds', e.target.value)}
-                      label="Country"
-                    >
-                      <MenuItem value="">All Countries</MenuItem>
-                      {countries.map((country) => (
-                        <MenuItem key={country.countryCode} value={country.countryCode}>
-                          {country.countryName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {/* Holiday Category */}
-                <Grid item xs={12} md={2}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Holiday Category</InputLabel>
-                    <Select
-                      value={filters.holidayCategoryCode || ''}
-                      onChange={(e) => handleFilterChange('holidayCategoryCode', e.target.value)}
-                      label="Holiday Category"
-                    >
-                      <MenuItem value="">All Categories</MenuItem>
-                      {holidayCategories.map((cat) => (
-                        <MenuItem key={cat.categoryCode} value={cat.categoryCode}>
-                          {cat.categoryName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {/* Status */}
-                <Grid item xs={12} md={2}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      value={filters.status || ''}
-                      onChange={(e) => handleFilterChange('status', e.target.value)}
-                      label="Status"
-                    >
-                      <MenuItem value="">All Status</MenuItem>
-                      <MenuItem value="1">Active</MenuItem>
-                      <MenuItem value="0">Inactive</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {/* Validity From */}
-                <Grid item xs={12} md={3}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="date"
-                    label="Validity From"
-                    value={filters.validityFrom}
-                    onChange={(e) => handleFilterChange('validityFrom', e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-
-                {/* Validity To */}
-                <Grid item xs={12} md={3}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="date"
-                    label="Validity To"
-                    value={filters.validityTo}
-                    onChange={(e) => handleFilterChange('validityTo', e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-
-                {/* Action Buttons */}
-                <Grid item xs={12} md={6}>
-                  <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-                    <Button
-                      variant="outlined"
-                      startIcon={<RefreshIcon />}
-                      onClick={handleReset}
-                      className={styles.resetButton}
-                    >
-                      Reset
-                    </Button>
-                    <Button
-                      variant="contained"
-                      startIcon={<SearchIcon />}
-                      onClick={handleSearch}
-                      className={styles.searchButton}
-                      disabled={isLoading}
-                    >
-                      Search
-                    </Button>
-                  </Stack>
-                </Grid>
+        {/* Compact Filters */}
+        <Collapse in={showFilters}>
+          <Box className={styles.filterSection}>
+            <Grid container spacing={1.5} alignItems="center">
+              <Grid item xs={12} sm={6} md={2}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Region</InputLabel>
+                  <Select
+                    value={filters.regionId || 0}
+                    onChange={(e) => handleFilterChange('regionId', Number(e.target.value))}
+                    label="Region"
+                  >
+                    <MenuItem value={0}>All Regions</MenuItem>
+                    {regions.map((r) => (
+                      <MenuItem key={r.regionId} value={r.regionId}>
+                        {r.regionName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
-            </Box>
-          </>
-        )}
-      </Paper>
 
-      {/* Results Summary */}
-      <Box className={styles.resultsSummary}>
-        <Typography variant="body2" className={styles.resultsText}>
-          Showing <strong>{filteredPackages.length}</strong> of <strong>{packages.length}</strong>{' '}
-          packages
-        </Typography>
+              <Grid item xs={12} sm={6} md={2}>
+                <FormControl fullWidth size="small" disabled={!filters.regionId}>
+                  <InputLabel>Country</InputLabel>
+                  <Select
+                    value={filters.countryIds || ''}
+                    onChange={(e) => handleFilterChange('countryIds', e.target.value)}
+                    label="Country"
+                  >
+                    <MenuItem value="">All Countries</MenuItem>
+                    {countries.map((c) => (
+                      <MenuItem key={c.countryCode} value={c.countryCode}>
+                        {c.countryName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={2}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    value={filters.holidayCategoryCode || ''}
+                    onChange={(e) => handleFilterChange('holidayCategoryCode', e.target.value)}
+                    label="Category"
+                  >
+                    <MenuItem value="">All Categories</MenuItem>
+                    {holidayCategories.map((c) => (
+                      <MenuItem key={c.categoryCode} value={c.categoryCode}>
+                        {c.categoryName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={1.5}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={filters.status || ''}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    label="Status"
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    <MenuItem value="1">Active</MenuItem>
+                    <MenuItem value="0">Inactive</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={1.75}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="date"
+                  label="From"
+                  value={filters.validityFrom}
+                  onChange={(e) => handleFilterChange('validityFrom', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={1.75}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="date"
+                  label="To"
+                  value={filters.validityTo}
+                  onChange={(e) => handleFilterChange('validityTo', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={12} md={1}>
+                <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                  <Tooltip title="Search">
+                    <IconButton size="small" onClick={handleSearch} color="primary">
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Reset">
+                    <IconButton size="small" onClick={handleReset}>
+                      <RefreshIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Stack>
+              </Grid>
+            </Grid>
+          </Box>
+        </Collapse>
       </Box>
 
-      {/* Content Area */}
-      <Box className={styles.contentArea}>
+      {/* Content */}
+      <Box className={styles.content}>
         {isLoading ? (
-          <Paper className={styles.emptyState}>
-            <Typography variant="h6" color="textSecondary">
-              Loading packages...
-            </Typography>
-          </Paper>
+          <Alert severity="info">Loading packages...</Alert>
         ) : filteredPackages.length === 0 ? (
-          <Paper className={styles.emptyState}>
-            <Alert severity="warning" sx={{ maxWidth: 600 }}>
-              No packages found. Try adjusting your filters.
-            </Alert>
-          </Paper>
+          <Alert severity="warning">No packages found. Try adjusting your filters.</Alert>
         ) : viewMode === 'card' ? (
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {filteredPackages.map((pkg) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={pkg.packageId}>
-                <Card className={styles.packageCard} elevation={2}>
+                <Card className={styles.card}>
+                  {/* Compact Header with 3-dot menu */}
                   <Box className={styles.cardHeader}>
-                    <Avatar className={styles.packageAvatar}>
-                      <PlaceIcon />
-                    </Avatar>
-                    <Box className={styles.cardTitleBox}>
-                      <Typography variant="subtitle1" className={styles.packageTitle}>
-                        {pkg.packageName}
-                      </Typography>
-                      <Typography variant="caption" className={styles.packageCode}>
-                        {pkg.packageCode}
-                      </Typography>
+                    <Box className={styles.cardHeaderContent}>
+                      <Box className={styles.iconWrapper}>
+                        <PlaceIcon />
+                      </Box>
+                      <Box className={styles.cardTitleSection}>
+                        <Typography variant="subtitle2" className={styles.cardTitle} noWrap>
+                          {pkg.packageName}
+                        </Typography>
+                        <Typography variant="caption" className={styles.cardCode}>
+                          {pkg.packageCode}
+                        </Typography>
+                      </Box>
+                      <IconButton
+                        size="small"
+                        className={styles.menuButton}
+                        onClick={(e) => handleMenuOpen(e, pkg)}
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
                     </Box>
                   </Box>
 
-                  <CardContent className={styles.cardBody}>
-                    <Stack spacing={1.5}>
-                      <Box className={styles.infoRow}>
-                        <Typography variant="body2" color="textSecondary">
-                          Holiday Type
+                  {/* Compact Card Body */}
+                  <CardContent className={styles.cardContent}>
+                    <Stack spacing={0.75}>
+                      <Box className={styles.compactRow}>
+                        <Typography variant="caption" className={styles.compactLabel}>
+                          Type
                         </Typography>
-                        <Chip
-                          label={pkg.holidayType}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
+                        <Typography variant="caption" fontWeight={600} className={styles.compactValue}>
+                          {pkg.holidayType}
+                        </Typography>
                       </Box>
 
-                      <Box className={styles.infoRow}>
-                        <Typography variant="body2" color="textSecondary">
+                      <Box className={styles.compactRow}>
+                        <Typography variant="caption" className={styles.compactLabel}>
                           Duration
                         </Typography>
-                        <Typography variant="body2" fontWeight={600}>
+                        <Typography variant="caption" fontWeight={600} className={styles.compactValue}>
                           {pkg.days} Days
                         </Typography>
                       </Box>
 
-                      <Box className={styles.infoRow}>
-                        <Typography variant="body2" color="textSecondary">
-                          Price Status
-                        </Typography>
+                      <Box className={styles.chipsRow}>
                         <Chip
                           label={pkg.priceStatus}
                           size="small"
-                          color={getPriceStatusColor(pkg.priceStatus)}
+                          className={pkg.priceStatus === 'Complete' ? styles.chipSuccess : styles.chipWarning}
+                        />
+                        <Chip
+                          label={pkg.status}
+                          size="small"
+                          className={pkg.status === 'Active' ? styles.chipActive : styles.chipInactive}
                         />
                       </Box>
 
-                      <Divider />
-
-                      <Box className={styles.dateInfo}>
-                        <CalendarIcon fontSize="small" color="action" />
-                        <Typography variant="caption" color="textSecondary">
-                          {pkg.validityFrom} - {pkg.validityTo}
-                        </Typography>
+                      <Box className={styles.compactDateSection}>
+                        <CalendarIcon fontSize="small" className={styles.calendarIcon} />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" display="block" fontSize="0.7rem">
+                            Validity Period
+                          </Typography>
+                          <Typography variant="caption" fontWeight={500} fontSize="0.7rem">
+                            {pkg.validityFrom} - {pkg.validityTo}
+                          </Typography>
+                        </Box>
                       </Box>
 
-                      <Box className={styles.badges}>
-                        {pkg.deals && (
-                          <Chip
-                            icon={<DealIcon />}
-                            label="Deals"
-                            size="small"
-                            color="secondary"
-                            variant="outlined"
-                          />
-                        )}
-                        {pkg.recommended && (
-                          <Chip
-                            icon={<RecommendedIcon />}
-                            label="Recommended"
-                            size="small"
-                            color="warning"
-                            variant="outlined"
-                          />
-                        )}
-                        {pkg.freeSell && (
-                          <Chip
-                            icon={<FreeSellIcon />}
-                            label="Free Sell"
-                            size="small"
-                            color="success"
-                            variant="outlined"
-                          />
-                        )}
-                      </Box>
+                      {(pkg.deals || pkg.recommended || pkg.freeSell) && (
+                        <Box className={styles.compactFeatureTags}>
+                          {pkg.freeSell && (
+                            <Box className={styles.compactFeatureTag}>
+                              <FreeSellIcon fontSize="small" />
+                              <Typography variant="caption">Free Sell</Typography>
+                            </Box>
+                          )}
+                          {pkg.deals && (
+                            <Box className={styles.compactFeatureTag}>
+                              <DealIcon fontSize="small" />
+                              <Typography variant="caption">Deals</Typography>
+                            </Box>
+                          )}
+                          {pkg.recommended && (
+                            <Box className={styles.compactFeatureTag}>
+                              <RecommendedIcon fontSize="small" />
+                              <Typography variant="caption">Top Pick</Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      )}
                     </Stack>
                   </CardContent>
-
-                  <CardActions className={styles.cardFooter}>
-                    <Chip label={pkg.status} size="small" color={getStatusColor(pkg.status)} />
-                    <Box sx={{ flex: 1 }} />
-                    <Button
-                      size="small"
-                      startIcon={<ViewIcon />}
-                      onClick={() => navigate(`/package/view/${pkg.packageId}`)}
-                    >
-                      View
-                    </Button>
-                    <Button
-                      size="small"
-                      startIcon={<EditIcon />}
-                      onClick={() => navigate(`/package/edit/${pkg.packageId}`)}
-                    >
-                      Edit
-                    </Button>
-                  </CardActions>
                 </Card>
               </Grid>
             ))}
           </Grid>
         ) : (
-          <TableContainer component={Paper} className={styles.tableContainer}>
-            <Table stickyHeader>
+          <TableContainer component={Paper} className={styles.tableWrapper}>
+            <Table size="small">
               <TableHead>
-                <TableRow>
-                  <TableCell className={styles.tableHeaderCell}>Package Code</TableCell>
+                <TableRow className={styles.tableHeader}>
+                  <TableCell className={styles.tableHeaderCell}>Code</TableCell>
                   <TableCell className={styles.tableHeaderCell}>Package Name</TableCell>
-                  <TableCell className={styles.tableHeaderCell}>Holiday Type</TableCell>
-                  <TableCell className={styles.tableHeaderCell}>Duration</TableCell>
-                  <TableCell className={styles.tableHeaderCell}>Validity Period</TableCell>
-                  <TableCell className={styles.tableHeaderCell}>Price Status</TableCell>
+                  <TableCell className={styles.tableHeaderCell}>Type</TableCell>
+                  <TableCell className={styles.tableHeaderCell} align="center">
+                    Days
+                  </TableCell>
+                  <TableCell className={styles.tableHeaderCell}>Validity</TableCell>
+                  <TableCell className={styles.tableHeaderCell}>Price</TableCell>
                   <TableCell className={styles.tableHeaderCell}>Status</TableCell>
                   <TableCell className={styles.tableHeaderCell}>Features</TableCell>
                   <TableCell className={styles.tableHeaderCell} align="center">
@@ -557,28 +501,30 @@ const PackageList: React.FC = () => {
                 {filteredPackages.map((pkg) => (
                   <TableRow key={pkg.packageId} hover className={styles.tableRow}>
                     <TableCell>
-                      <Typography variant="body2" fontWeight={600} color="primary">
+                      <Typography variant="body2" className={styles.codeCell}>
                         {pkg.packageCode}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">{pkg.packageName}</Typography>
+                      <Typography variant="body2" fontWeight={500}>
+                        {pkg.packageName}
+                      </Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={pkg.holidayType}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
+                      <Typography variant="body2" className={styles.typeCell}>
+                        {pkg.holidayType}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2" fontWeight={600}>
+                        {pkg.days}
+                      </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">{pkg.days} Days</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="caption" color="textSecondary">
+                      <Typography variant="caption" display="block" className={styles.dateText}>
                         {pkg.validityFrom}
-                        <br />
+                      </Typography>
+                      <Typography variant="caption" display="block" color="text.secondary">
                         {pkg.validityTo}
                       </Typography>
                     </TableCell>
@@ -586,47 +532,47 @@ const PackageList: React.FC = () => {
                       <Chip
                         label={pkg.priceStatus}
                         size="small"
-                        color={getPriceStatusColor(pkg.priceStatus)}
+                        className={pkg.priceStatus === 'Complete' ? styles.chipSuccess : styles.chipWarning}
                       />
                     </TableCell>
                     <TableCell>
                       <Chip
                         label={pkg.status}
                         size="small"
-                        color={getStatusColor(pkg.status)}
+                        className={pkg.status === 'Active' ? styles.chipActive : styles.chipInactive}
                       />
                     </TableCell>
                     <TableCell>
                       <Stack direction="row" spacing={0.5}>
                         {pkg.deals && (
                           <Tooltip title="Deals">
-                            <DealIcon fontSize="small" color="secondary" />
+                            <DealIcon fontSize="small" className={styles.featureIconDeal} />
                           </Tooltip>
                         )}
                         {pkg.recommended && (
                           <Tooltip title="Recommended">
-                            <RecommendedIcon fontSize="small" color="warning" />
+                            <RecommendedIcon fontSize="small" className={styles.featureIconStar} />
                           </Tooltip>
                         )}
                         {pkg.freeSell && (
                           <Tooltip title="Free Sell">
-                            <FreeSellIcon fontSize="small" color="success" />
+                            <FreeSellIcon fontSize="small" className={styles.featureIconCart} />
                           </Tooltip>
                         )}
                       </Stack>
                     </TableCell>
                     <TableCell align="center">
-                      <Stack direction="row" spacing={1} justifyContent="center">
+                      <Stack direction="row" spacing={0.5} justifyContent="center">
                         <IconButton
                           size="small"
-                          color="primary"
+                          className={styles.actionIcon}
                           onClick={() => navigate(`/package/view/${pkg.packageId}`)}
                         >
                           <ViewIcon fontSize="small" />
                         </IconButton>
                         <IconButton
                           size="small"
-                          color="primary"
+                          className={styles.actionIcon}
                           onClick={() => navigate(`/package/edit/${pkg.packageId}`)}
                         >
                           <EditIcon fontSize="small" />
@@ -640,6 +586,24 @@ const PackageList: React.FC = () => {
           </TableContainer>
         )}
       </Box>
+
+      {/* 3-Dot Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItemMui onClick={handleView}>
+          <ViewIcon fontSize="small" sx={{ mr: 1 }} />
+          View Details
+        </MenuItemMui>
+        <MenuItemMui onClick={handleEdit}>
+          <EditIcon fontSize="small" sx={{ mr: 1 }} />
+          Edit Package
+        </MenuItemMui>
+      </Menu>
     </Box>
   );
 };

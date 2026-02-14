@@ -144,11 +144,68 @@ export const transferMenuItems: MenuItem[] = [
 export const packageMenuItems: MenuItem[] = [
   {
     id: 1,
-    label: 'Package Management',
+    label: 'Package Master',
+    icon: 'list',
+    path: '/package/package-list',
+    isActive: true,
+  },
+  {
+    id: 2,
+    label: 'Manage Packages',
     icon: 'beach_access',
     isActive: true,
     children: [
-      { id: 101, label: 'Package Master', path: '/package/package-master', isActive: true },
+      { id: 201, label: 'Welcome', path: '/package/welcome', isActive: true },
+      { id: 202, label: 'Create Package', path: '/package/create-package-wizard', isActive: true },
+      { id: 203, label: 'Update Package', path: '/package/update-package', isActive: true },
+      { id: 204, label: 'Default Cancellation', path: '/package/default-cancellation', isActive: true },
+      { id: 205, label: 'Add Allocation', path: '/package/add-allocation', isActive: true },
+    ],
+  },
+  {
+    id: 3,
+    label: 'Mapping Masters',
+    icon: 'map',
+    isActive: true,
+    children: [
+      { id: 301, label: 'Holiday Category-Type Mapping', path: '/package/holiday-category-type-mapping', isActive: true },
+      { id: 302, label: 'Tabs Type', path: '/package/tabs-type', isActive: true },
+      { id: 303, label: 'Holiday Type-Tab Mapping', path: '/package/holiday-type-tab-mapping', isActive: true },
+    ],
+  },
+  {
+    id: 4,
+    label: 'Manage Offers',
+    icon: 'local_offer',
+    isActive: true,
+    children: [
+      { id: 401, label: 'Offer Type Master', path: '/package/offer-type-master', isActive: true },
+      { id: 402, label: 'Manage Package Offer', path: '/package/manage-package-offer', isActive: true },
+    ],
+  },
+  {
+    id: 5,
+    label: 'Component Masters',
+    icon: 'dashboard',
+    isActive: true,
+    children: [
+      { id: 501, label: 'Package Components', path: '/package/package-components', isActive: true },
+      { id: 502, label: 'Facts Type', path: '/package/facts-type', isActive: true },
+    ],
+  },
+  {
+    id: 6,
+    label: 'Manage Masters',
+    icon: 'settings',
+    isActive: true,
+    children: [
+      { id: 601, label: 'Holiday Category', path: '/package/holiday-category-master', isActive: true },
+      { id: 602, label: 'Departure Cities', path: '/package/departure-cities', isActive: true },
+      { id: 603, label: 'Region', path: '/package/region', isActive: true },
+      { id: 604, label: 'Market Master', path: '/package/market-master', isActive: true },
+      { id: 605, label: 'Holiday Type', path: '/package/holiday-type', isActive: true },
+      { id: 606, label: 'Tour Type', path: '/package/tour-type', isActive: true },
+      { id: 607, label: 'Package Category', path: '/package/package-category', isActive: true },
     ],
   },
 ];

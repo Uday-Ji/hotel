@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setActiveModule, setSidebarMenuItems } from '@/store/slices/uiSlice';
-import Header from './Header';
+import TopNav from './TopNav';
 import Sidebar from './Sidebar';
 import styles from './ModuleLayout.module.css';
 import { getModuleMenuItems } from './sidebarConfig';
@@ -24,9 +24,18 @@ const ModuleLayout: React.FC = () => {
     }
   }, [location.pathname, dispatch]);
 
+  
+  const handleSidebarToggle = () => {
+    //setSidebarCollapsed(!sidebarCollapsed);
+  };
+
+const handleMenuClick = () => {
+    //setSidebarOpen(!sidebarOpen);
+  };
   return (
     <Box className={styles.moduleLayout}>
-      <Header />
+     
+     <TopNav onMenuClick={handleMenuClick} companyCode="SMT" />
       <Box className={styles.container}>
         {sidebarOpen && <Sidebar />}
         <Box

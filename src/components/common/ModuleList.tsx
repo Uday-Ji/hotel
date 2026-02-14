@@ -36,7 +36,7 @@ const moduleRouteMap: Record<string, string> = {
   Hotel: '/hotel/hotel-master',
   Booking: '/booking/booking-details',
   User: '/user/user-master',
-  Package: '/package/package-master',
+  Package: '/package/package-list',
   Transfer: '/transfer/transfer-master',
   SeightSeeing: '/sightseeing/sightseeing-master',
   Car: '/car/car-master',
