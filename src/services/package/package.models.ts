@@ -218,3 +218,92 @@ export interface PackageListItem {
   menu: boolean;
   freeSell: boolean;
 }
+
+export interface UpdatePackageStatusRequest {
+  packageId: number;
+  userId: number;
+  companyCode: string;
+  status: boolean;
+  deals: boolean;
+  recommended: boolean;
+  menu: boolean;
+}
+
+
+export interface CreateAndUpdatePackageRequest {
+  categoryId: string;
+  holidayType: string;
+  packageCode: string;
+  departCityList: string;
+  packageName: string;
+  supplierId: string;
+  offerType: string;
+  offerDesc: string;
+  tourType: string;
+  marketType: string;
+  days: number;
+  validityFrom: string;
+  validityTo: string;
+  bookingFrom: string;
+  bookingTo: string;
+  sunday: boolean;
+  monday: boolean;
+  tuesday: boolean;
+  wednesday: boolean;
+  thursday: boolean;
+  friday: boolean;
+  saturday: boolean;
+  componentType: string;
+  regionId: number;
+  countryIds: string;
+  cityId: string;
+  agentCommision: number;
+  commisionTypeInPercent: boolean;
+  recommended: boolean;
+  deals: boolean;
+  menu: boolean;
+  freesell: boolean;
+  remarks: string;
+  status: number;
+  actionType: 'INSERT' | 'UPDATE';
+  bookingType: string;
+  ranking: number;
+  userId: number;
+  companyCode: string;
+  pkgId: number;
+  shortDesc: string;
+  longDesc: string;
+  languageCode: string;
+}
+
+export interface CreateAndUpdatePackageResponse {
+  packageId: number;
+  packageCode: string;
+  message: string;
+}
+
+export interface HolidayType {
+  holidayTypeID: number;
+  holidayTypeName: string;
+  categoryCode?: string;
+  isActive: boolean;
+}
+
+export interface Language {
+  languageName: string;
+  languageCode: string;
+}
+
+export interface City{
+  cityCode: string;
+  countryCode: string;
+  cName: string;
+  cityName: string;
+  cityId: string;
+  isMaster: boolean;
+}
+
+export interface PackageSupplier {
+  supplierId: number;
+  supplierName: string;
+}

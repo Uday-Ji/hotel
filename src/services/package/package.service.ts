@@ -9,6 +9,13 @@ import type {
   FactsType,
   CreatePackageRequest,   
   PackageListItem,
+  UpdatePackageStatusRequest,
+  CreateAndUpdatePackageRequest,
+  CreateAndUpdatePackageResponse,
+  HolidayType,
+  Language,
+  City,
+  PackageSupplier,
   
 } from './package.models';
 import { envConfig } from '@/config';
@@ -44,6 +51,14 @@ class PackageService {
   async getHolidayCategoryList(): Promise<HolidayCategory[]> {
     const response = await apiClient.post<ApiResponse<HolidayCategory[]>>(
       '/Common/HolidayCategoryList',
+      { companyCode: envConfig.tenant.companyCode }
+    );
+    return response.data.data;
+  }
+
+  async getLanguageList(): Promise<Language[]> {
+    const response = await apiClient.post<ApiResponse<Language[]>>(
+      '/Common/LanguageList',
       { companyCode: envConfig.tenant.companyCode }
     );
     return response.data.data;
@@ -141,6 +156,13 @@ class PackageService {
     return response.data.data;
   }
 
+  async updatePackageStatusAndFeatures(data: UpdatePackageStatusRequest): Promise<void> {
+    const response = await apiClient.post<ApiResponse<void>>(
+      '/Package/UpdateStatusAndTags',
+      data
+    );
+    return response.data.data;
+  };
   async deleteFactsType(id: number): Promise<void> {
     await apiClient.post('/Package/DeleteFactsType', {
       sNo: id,
@@ -148,6 +170,40 @@ class PackageService {
     });
   }
 
+  async createAndUpdatePackage(
+    data: CreateAndUpdatePackageRequest
+  ): Promise<CreateAndUpdatePackageResponse> {
+    const response = await apiClient.post<ApiResponse<CreateAndUpdatePackageResponse>>(
+      '/Package/CreateAndUpdatePackage',
+      data
+    );
+    return response.data.data;
+  }
+  
+  async getHolidayTypeList(holidayCategoryCode:string): Promise<HolidayType[]> {
+    const response = await apiClient.post<ApiResponse<HolidayType[]>>(
+      '/Package/HolidayTypeList',
+      { companyCode: envConfig.tenant.companyCode, holidayCategoryCode }
+    );
+    return response.data.data;
+  }
+
+  async getCitiesList(): Promise<City[]> {
+    const response = await apiClient.post<ApiResponse<City[]>>(
+      '/Package/DepartureCitiesList',
+      { companyCode: envConfig.tenant.companyCode }
+    );
+    return response.data.data;
+  }
+
+    async PackageSuppliersList(): Promise<PackageSupplier[]> {
+    const response = await apiClient.post<ApiResponse<PackageSupplier[]>>(
+      '/Package/PackageSuppliersList',
+      { companyCode: envConfig.tenant.companyCode }
+    );
+    return response.data.data;
+  }
+  
   async createPackage(data: CreatePackageRequest): Promise<Package> {
   const formData = new FormData();
   

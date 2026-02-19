@@ -45,7 +45,9 @@ import {
   Place as PlaceIcon,
   Refresh as RefreshIcon,
   MoreVert as MoreVertIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
+import PackageStatusModal from './components/PackageStatusModal';
 import { useNavigate } from 'react-router-dom';
 import { packageService } from '@/services/package/package.service';
 import { regionService } from '@/services/common/region.service';
@@ -65,6 +67,8 @@ const PackageList: React.FC = () => {
   const [regions, setRegions] = useState<Region[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [holidayCategories, setHolidayCategories] = useState<HolidayCategory[]>([]);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [selectedPackageForStatus, setSelectedPackageForStatus] = useState<PackageListItem | null>(null);
 
   // Menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -85,6 +89,14 @@ const PackageList: React.FC = () => {
     fetchDropdownData();
     fetchPackages();
   }, []);
+const handleOpenStatusModal = (pkg: PackageListItem) => {
+  setSelectedPackageForStatus(pkg);
+  setStatusModalOpen(true);
+};
+
+const handleStatusUpdateSuccess = () => {
+  fetchPackages(); // Refresh the package list
+};
 
   const fetchDropdownData = async () => {
     try {
@@ -563,13 +575,15 @@ const PackageList: React.FC = () => {
                     </TableCell>
                     <TableCell align="center">
                       <Stack direction="row" spacing={0.5} justifyContent="center">
-                        <IconButton
-                          size="small"
-                          className={styles.actionIcon}
-                          onClick={() => navigate(`/package/view/${pkg.packageId}`)}
-                        >
-                          <ViewIcon fontSize="small" />
-                        </IconButton>
+                       <Tooltip title="Manage Status & Features">
+      <IconButton
+        size="small"
+        className={styles.actionIcon}
+        onClick={() => handleOpenStatusModal(pkg)}
+      >
+        <SettingsIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
                         <IconButton
                           size="small"
                           className={styles.actionIcon}
@@ -585,6 +599,13 @@ const PackageList: React.FC = () => {
             </Table>
           </TableContainer>
         )}
+
+        <PackageStatusModal
+  open={statusModalOpen}
+  onClose={() => setStatusModalOpen(false)}
+  package={selectedPackageForStatus}
+  onSuccess={handleStatusUpdateSuccess}
+/>
       </Box>
 
       {/* 3-Dot Menu */}
@@ -595,10 +616,15 @@ const PackageList: React.FC = () => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <MenuItemMui onClick={handleView}>
-          <ViewIcon fontSize="small" sx={{ mr: 1 }} />
-          View Details
-        </MenuItemMui>
+         <MenuItemMui onClick={() => {
+    if (selectedPackage) {
+      handleOpenStatusModal(selectedPackage);
+    }
+    handleMenuClose();
+  }}>
+    <SettingsIcon fontSize="small" sx={{ mr: 1 }} />
+    Manage Status
+  </MenuItemMui>
         <MenuItemMui onClick={handleEdit}>
           <EditIcon fontSize="small" sx={{ mr: 1 }} />
           Edit Package
