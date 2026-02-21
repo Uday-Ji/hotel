@@ -12,6 +12,13 @@ import {
   Divider,
   Alert,
   Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -24,8 +31,6 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { DataGrid } from '@/components/common/DataGrid';
-import type { Column } from '@/components/common/DataGrid';
 import type { CreatePackageRequest } from '@/services/package/package.models';
 
 interface Step5Props {
@@ -34,7 +39,6 @@ interface Step5Props {
   onValidationChange: (isValid: boolean) => void;
 }
 
-// Schema for adding/editing a single day
 const itineraryDaySchema = z.object({
   day: z.number().min(1, 'Day must be at least 1'),
   cityId: z.number().min(1, 'City is required'),
@@ -43,6 +47,13 @@ const itineraryDaySchema = z.object({
 });
 
 type ItineraryDayFormData = z.infer<typeof itineraryDaySchema>;
+
+const compactFieldSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: 2,
+    backgroundColor: '#fff',
+  },
+};
 
 const Step5ItineraryManage: React.FC<Step5Props> = ({
   formData,
@@ -61,7 +72,6 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
     { id: 3, name: 'Mumbai' },
   ];
 
-  // Form for adding/editing individual days
   const {
     control: dayControl,
     handleSubmit: handleDaySubmit,
@@ -70,39 +80,20 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
     formState: { errors: dayErrors },
   } = useForm<ItineraryDayFormData>({
     resolver: zodResolver(itineraryDaySchema),
-    defaultValues: {
-      day: 1,
-      cityId: 0,
-      briefDescription: '',
-      fullDescription: '',
-    },
+    defaultValues: { day: 1, cityId: 0, briefDescription: '', fullDescription: '' },
   });
 
-  // Update parent and validation whenever itinerary days change
   useEffect(() => {
     const isValid = itineraryDays.length > 0;
-    updateFormData({
-      itineraryDays: itineraryDays,
-      inclusions: inclusions,
-      exclusions: exclusions,
-    });
+    updateFormData({ itineraryDays, inclusions, exclusions });
     onValidationChange(isValid);
   }, [itineraryDays, inclusions, exclusions]);
 
   const onSubmitDay = (data: ItineraryDayFormData) => {
-    const newDay: any = {
-      ...data,
-      id: isEditing ? editingId : Date.now(),
-      fullDescription: data.fullDescription || '',
-    };
-
-    let updatedDays;
-    if (isEditing && editingId) {
-      updatedDays = itineraryDays.map((day: any) => (day.id === editingId ? newDay : day));
-    } else {
-      updatedDays = [...itineraryDays, newDay];
-    }
-
+    const newDay: any = { ...data, id: isEditing ? editingId : Date.now(), fullDescription: data.fullDescription || '' };
+    const updatedDays = isEditing && editingId
+      ? itineraryDays.map((d: any) => (d.id === editingId ? newDay : d))
+      : [...itineraryDays, newDay];
     setItineraryDays(updatedDays);
     handleCancel();
   };
@@ -116,87 +107,80 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
     setDayValue('fullDescription', day.fullDescription || '');
   };
 
-  const handleDelete = (id: number) => {
-    const updatedDays = itineraryDays.filter((day: any) => day.id !== id);
-    setItineraryDays(updatedDays);
-  };
+  const handleDelete = (id: number) => setItineraryDays(itineraryDays.filter((d: any) => d.id !== id));
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditingId(null);
-    resetDayForm({
-      day: itineraryDays.length + 1,
-      cityId: 0,
-      briefDescription: '',
-      fullDescription: '',
-    });
-  };
-
-  const columns: Column<any>[] = [
-    { key: 'day', label: 'Day', sortable: true, width: '80px' },
-    {
-      key: 'cityId',
-      label: 'City',
-      width: '150px',
-      render: (item) => cities.find((c) => c.id === item.cityId)?.name || '--',
-    },
-    { key: 'briefDescription', label: 'Brief Description', sortable: true },
-    {
-      key: 'actions',
-      label: 'Actions',
-      width: '120px',
-      render: (item) => (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <IconButton size="small" color="primary" onClick={() => handleEdit(item)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" color="error" onClick={() => handleDelete(item.id)}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ];
-
-  const compactFieldSx = {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: 2,
-      backgroundColor: '#fff',
-    },
+    resetDayForm({ day: itineraryDays.length + 1, cityId: 0, briefDescription: '', fullDescription: '' });
   };
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
       <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
         {itineraryDays.length === 0 && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            Please add at least one itinerary day to proceed to the next step.
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Please add at least one itinerary day to proceed.
           </Alert>
         )}
 
         <Card sx={{ mb: 3, boxShadow: 'none', border: '1px solid #e5e7eb' }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <CalendarIcon sx={{ mr: 1, color: '#f59e0b', fontSize: 28 }} />
+              <CalendarIcon sx={{ mr: 1, color: '#f59e0b', fontSize: 24 }} />
               <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>
                 Itinerary Management
               </Typography>
             </Box>
-            <Divider sx={{ mb: 3 }} />
+            <Divider sx={{ mb: 2 }} />
 
+            {/* Table */}
             {itineraryDays.length > 0 && (
-              <Box sx={{ mb: 3 }}>
-                <DataGrid title="" data={itineraryDays as any} columns={columns} />
-              </Box>
+              <TableContainer component={Paper} variant="outlined" sx={{ mb: 3, borderRadius: 2 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#64748b', width: 60 }}>Day</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#64748b', width: 140 }}>City</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#64748b' }}>Brief Description</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#64748b', width: 100, textAlign: 'center' }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {itineraryDays.map((day: any, index) => (
+                      <TableRow key={day.id} hover sx={{ '&:last-child td': { border: 0 } }}>
+                        <TableCell>
+                          <Chip label={`Day ${day.day}`} size="small" color="primary" variant="outlined" sx={{ fontSize: '0.75rem' }} />
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.8125rem' }}>
+                          {cities.find((c) => c.id === day.cityId)?.name || '--'}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.8125rem', color: '#374151' }}>
+                          {day.briefDescription}
+                        </TableCell>
+                        <TableCell sx={{ textAlign: 'center' }}>
+                          <IconButton size="small" color="primary" onClick={() => handleEdit(day)} sx={{ mr: 0.5 }}>
+                            <EditIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                          <IconButton size="small" color="error" onClick={() => handleDelete(day.id)}>
+                            <DeleteIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             )}
 
-            <Box>
-              <Typography variant="subtitle1" gutterBottom fontWeight={600} sx={{ mb: 2 }}>
-                {isEditing ? 'Edit Day' : 'Add New Day'}
+            {/* Add / Edit Form */}
+            <Box sx={{ bgcolor: '#f8fafc', p: 2, borderRadius: 2, border: '1px dashed #e2e8f0' }}>
+              <Typography variant="body2" fontWeight={600} sx={{ mb: 1.5, color: '#374151' }}>
+                {isEditing ? '✏️ Edit Day' : '➕ Add New Day'}
               </Typography>
               <form onSubmit={handleDaySubmit(onSubmitDay)}>
-                <Grid container spacing={2.5}>
-                  <Grid item xs={12} md={2}>
+                <Grid container spacing={2} alignItems="flex-start">
+                  <Grid item xs={6} md={2}>
                     <Controller
                       name="day"
                       control={dayControl}
@@ -217,7 +201,7 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={3}>
+                  <Grid item xs={6} md={3}>
                     <Controller
                       name="cityId"
                       control={dayControl}
@@ -235,9 +219,7 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                         >
                           <MenuItem value={0}>--Select City--</MenuItem>
                           {cities.map((city) => (
-                            <MenuItem key={city.id} value={city.id}>
-                              {city.name}
-                            </MenuItem>
+                            <MenuItem key={city.id} value={city.id}>{city.name}</MenuItem>
                           ))}
                         </TextField>
                       )}
@@ -257,7 +239,6 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                           sx={compactFieldSx}
                           error={!!dayErrors.briefDescription}
                           helperText={dayErrors.briefDescription?.message}
-                          placeholder="Enter brief description"
                         />
                       )}
                     />
@@ -270,29 +251,19 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                         type="submit"
                         variant="contained"
                         size="small"
-                        startIcon={isEditing ? <SaveIcon fontSize="small" /> : <AddIcon fontSize="small" />}
-                        sx={{ 
+                        startIcon={isEditing ? <SaveIcon sx={{ fontSize: 16 }} /> : <AddIcon sx={{ fontSize: 16 }} />}
+                        sx={{
                           height: '40px',
                           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          '&:hover': {
-                            background: 'linear-gradient(135deg, #5568d3 0%, #5a3a7d 100%)',
-                          }
+                          fontSize: '0.8125rem',
+                          '&:hover': { background: 'linear-gradient(135deg, #5568d3 0%, #5a3a7d 100%)' },
                         }}
                       >
                         {isEditing ? 'Update' : 'Add'}
                       </Button>
                       {isEditing && (
-                        <IconButton 
-                          color="error" 
-                          onClick={handleCancel}
-                          size="small"
-                          sx={{ 
-                            height: '40px',
-                            width: '40px',
-                            border: '1px solid #ef4444',
-                          }}
-                        >
-                          <CancelIcon fontSize="small" />
+                        <IconButton color="error" onClick={handleCancel} size="small" sx={{ height: '40px', width: '40px', border: '1px solid #ef4444' }}>
+                          <CancelIcon sx={{ fontSize: 16 }} />
                         </IconButton>
                       )}
                     </Box>
@@ -308,10 +279,9 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                           fullWidth
                           size="small"
                           multiline
-                          rows={3}
-                          label="Full Description"
+                          rows={2}
+                          label="Full Description (Optional)"
                           sx={compactFieldSx}
-                          placeholder="Optional: Add detailed description for this day"
                         />
                       )}
                     />
@@ -322,14 +292,13 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
           </CardContent>
         </Card>
 
+        {/* Inclusions & Exclusions */}
         <Card sx={{ boxShadow: 'none', border: '1px solid #e5e7eb' }}>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                Inclusions & Exclusions
-              </Typography>
-            </Box>
-            <Divider sx={{ mb: 3 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b', mb: 2 }}>
+              Inclusions &amp; Exclusions
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
 
             <Grid container spacing={2.5}>
               <Grid item xs={12} md={6}>
@@ -345,7 +314,6 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                   placeholder="E.g., Hotel accommodation, Daily breakfast, Airport transfers..."
                 />
               </Grid>
-
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth

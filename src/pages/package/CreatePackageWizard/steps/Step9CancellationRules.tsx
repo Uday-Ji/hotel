@@ -4,19 +4,27 @@ import {
   Card,
   CardContent,
   Typography,
+  Button,
   Grid,
   TextField,
   MenuItem,
-  Button,
-  Divider,
   IconButton,
-  RadioGroup,
+  Divider,
+  Checkbox,
   FormControlLabel,
-  Radio,
+  RadioGroup,
   FormControl,
   FormLabel,
-  Checkbox,
+  Radio,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -28,8 +36,6 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { DataGrid } from '@/components/common/DataGrid';
-import type { Column } from '@/components/common/DataGrid';
 import type { CreatePackageRequest } from '@/services/package/package.models';
 
 interface Step9Props {
@@ -40,8 +46,8 @@ interface Step9Props {
 
 const cancellationSchema = z.object({
   condition: z.enum(['before', 'after']),
-  daysFrom: z.number().min(0, 'Days must be positive'),
-  amount: z.number().min(0, 'Amount must be positive').max(100, 'Percentage cannot exceed 100'),
+  daysFrom: z.number().min(0),
+  amount: z.number().min(0).max(100),
   amountType: z.enum(['percentage', 'fixed']),
   chargeType: z.enum(['perBooking', 'perPerson']),
   isActive: z.boolean(),
@@ -49,51 +55,30 @@ const cancellationSchema = z.object({
 
 type CancellationFormData = z.infer<typeof cancellationSchema>;
 
+const compactFieldSx = {
+  '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#fff' },
+};
+
 const Step9CancellationRules: React.FC<Step9Props> = ({ formData, updateFormData, onValidationChange }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<CancellationFormData>({
+  const { control, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CancellationFormData>({
     resolver: zodResolver(cancellationSchema),
-    defaultValues: {
-      condition: 'before',
-      daysFrom: 0,
-      amount: 0,
-      amountType: 'percentage',
-      chargeType: 'perBooking',
-      isActive: true,
-    },
+    defaultValues: { condition: 'before', daysFrom: 0, amount: 0, amountType: 'percentage', chargeType: 'perBooking', isActive: true },
   });
 
   const amountType = watch('amountType');
-  
-useEffect(() => {
-  // Cancellation rules are optional, so always valid
-  onValidationChange(true);
-}, [onValidationChange]);
+
+  useEffect(() => {
+    onValidationChange(true); // cancellation rules are optional
+  }, [onValidationChange]);
 
   const onSubmit = (data: CancellationFormData) => {
-    const newRule: any = {
-      ...data,
-      id: isEditing ? editingId : Date.now(),
-    };
-
-    let updatedRules;
-    if (isEditing && editingId) {
-      updatedRules = (formData.cancellationRules || []).map((rule: any) =>
-        rule.id === editingId ? newRule : rule
-      );
-    } else {
-      updatedRules = [...(formData.cancellationRules || []), newRule];
-    }
-
+    const newRule: any = { ...data, id: isEditing ? editingId : Date.now() };
+    const updatedRules = isEditing && editingId
+      ? (formData.cancellationRules || []).map((r: any) => r.id === editingId ? newRule : r)
+      : [...(formData.cancellationRules || []), newRule];
     updateFormData({ cancellationRules: updatedRules });
     handleCancel();
   };
@@ -110,8 +95,7 @@ useEffect(() => {
   };
 
   const handleDelete = (id: number) => {
-    const updatedRules = (formData.cancellationRules || []).filter((rule: any) => rule.id !== id);
-    updateFormData({ cancellationRules: updatedRules });
+    updateFormData({ cancellationRules: (formData.cancellationRules || []).filter((r: any) => r.id !== id) });
   };
 
   const handleCancel = () => {
@@ -120,83 +104,30 @@ useEffect(() => {
     reset();
   };
 
-  const columns: Column<any>[] = [
-    {
-      key: 'condition',
-      label: 'Condition',
-      render: (item) => item.condition.charAt(0).toUpperCase() + item.condition.slice(1),
-    },
-    {
-      key: 'daysFrom',
-      label: 'Days From',
-      sortable: true,
-    },
-    {
-      key: 'amount',
-      label: 'Amount',
-      render: (item) => `${item.amount}${item.amountType === 'percentage' ? '%' : ''}`,
-    },
-    {
-      key: 'amountType',
-      label: 'Amount Type',
-      render: (item) => (item.amountType === 'percentage' ? 'Percentage' : 'Fixed'),
-    },
-    {
-      key: 'chargeType',
-      label: 'Charge Type',
-      render: (item) => (item.chargeType === 'perBooking' ? 'Per Booking' : 'Per Person'),
-    },
-    {
-      key: 'isActive',
-      label: 'Status',
-      render: (item) => (
-        <Checkbox checked={item.isActive} disabled size="small" />
-      ),
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (item) => (
-        <Box>
-          <IconButton size="small" color="primary" onClick={() => handleEdit(item)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" color="error" onClick={() => handleDelete(item.id)}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ];
-
   return (
-    <Box>
-      <Alert severity="info" sx={{ mb: 3 }}>
-        Define cancellation policies for your package. You can add multiple rules based on different time periods.
+    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+      <Alert severity="info" sx={{ mb: 2, '& .MuiAlert-message': { fontSize: '0.8125rem' } }}>
+        Cancellation rules are optional. Define policies based on days before/after the tour date.
       </Alert>
 
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: 3, boxShadow: 'none', border: '1px solid #e5e7eb' }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ color: '#f59e0b' }}>
-            Policy Detail
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>
+              Policy Detail
+            </Typography>
+            <Chip label="Optional" size="small" sx={{ ml: 1.5, bgcolor: '#f0fdf4', color: '#16a34a', fontSize: '0.7rem' }} />
+          </Box>
+          <Divider sx={{ mb: 2 }} />
 
           <form onSubmit={handleSubmit(onSubmit)}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={3}>
+            <Grid container spacing={2.5}>
+              <Grid item xs={6} md={2}>
                 <Controller
                   name="condition"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      select
-                      fullWidth
-                      label="Condition *"
-                      error={!!errors.condition}
-                      helperText={errors.condition?.message}
-                    >
+                    <TextField {...field} select fullWidth size="small" label="Condition *" sx={compactFieldSx}>
                       <MenuItem value="before">Before</MenuItem>
                       <MenuItem value="after">After</MenuItem>
                     </TextField>
@@ -204,7 +135,7 @@ useEffect(() => {
                 />
               </Grid>
 
-              <Grid item xs={12} md={3}>
+              <Grid item xs={6} md={2}>
                 <Controller
                   name="daysFrom"
                   control={control}
@@ -212,8 +143,10 @@ useEffect(() => {
                     <TextField
                       {...field}
                       fullWidth
+                      size="small"
                       type="number"
-                      label="Days From *"
+                      label="Days *"
+                      sx={compactFieldSx}
                       error={!!errors.daysFrom}
                       helperText={errors.daysFrom?.message}
                       inputProps={{ min: 0 }}
@@ -223,7 +156,7 @@ useEffect(() => {
                 />
               </Grid>
 
-              <Grid item xs={12} md={3}>
+              <Grid item xs={6} md={2}>
                 <Controller
                   name="amount"
                   control={control}
@@ -231,93 +164,74 @@ useEffect(() => {
                     <TextField
                       {...field}
                       fullWidth
+                      size="small"
                       type="number"
                       label="Amount *"
+                      sx={compactFieldSx}
                       error={!!errors.amount}
                       helperText={errors.amount?.message}
-                      inputProps={{
-                        min: 0,
-                        max: amountType === 'percentage' ? 100 : undefined,
-                        step: amountType === 'percentage' ? 1 : 0.01,
-                      }}
+                      inputProps={{ min: 0, max: amountType === 'percentage' ? 100 : undefined, step: amountType === 'percentage' ? 1 : 0.01 }}
                       onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                     />
                   )}
                 />
               </Grid>
 
-              <Grid item xs={12} md={3}>
-                <FormControl component="fieldset">
-                  <FormLabel>Amount Type *</FormLabel>
+              <Grid item xs={6} md={3}>
+                <FormControl size="small">
+                  <FormLabel sx={{ fontSize: '0.75rem', fontWeight: 600 }}>Amount Type *</FormLabel>
                   <Controller
                     name="amountType"
                     control={control}
                     render={({ field }) => (
                       <RadioGroup {...field} row>
-                        <FormControlLabel
-                          value="percentage"
-                          control={<Radio size="small" />}
-                          label="%"
-                        />
-                        <FormControlLabel
-                          value="fixed"
-                          control={<Radio size="small" />}
-                          label="Fixed"
-                        />
+                        <FormControlLabel value="percentage" control={<Radio size="small" />} label={<Typography variant="body2">%</Typography>} />
+                        <FormControlLabel value="fixed" control={<Radio size="small" />} label={<Typography variant="body2">Fixed</Typography>} />
                       </RadioGroup>
                     )}
                   />
                 </FormControl>
               </Grid>
 
-              <Grid item xs={12} md={6}>
-                <FormControl component="fieldset">
-                  <FormLabel>Charge Type *</FormLabel>
+              <Grid item xs={6} md={3}>
+                <FormControl size="small">
+                  <FormLabel sx={{ fontSize: '0.75rem', fontWeight: 600 }}>Charge Type *</FormLabel>
                   <Controller
                     name="chargeType"
                     control={control}
                     render={({ field }) => (
                       <RadioGroup {...field} row>
-                        <FormControlLabel
-                          value="perBooking"
-                          control={<Radio size="small" />}
-                          label="Per Booking"
-                        />
-                        <FormControlLabel
-                          value="perPerson"
-                          control={<Radio size="small" />}
-                          label="Per Person"
-                        />
+                        <FormControlLabel value="perBooking" control={<Radio size="small" />} label={<Typography variant="body2">Per Booking</Typography>} />
+                        <FormControlLabel value="perPerson" control={<Radio size="small" />} label={<Typography variant="body2">Per Person</Typography>} />
                       </RadioGroup>
                     )}
                   />
                 </FormControl>
               </Grid>
 
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="isActive"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} />}
-                      label="Active"
-                    />
-                  )}
-                />
-              </Grid>
-
               <Grid item xs={12}>
-                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Controller
+                    name="isActive"
+                    control={control}
+                    render={({ field }) => (
+                      <FormControlLabel
+                        control={<Checkbox {...field} checked={field.value} size="small" />}
+                        label={<Typography variant="body2">Active</Typography>}
+                      />
+                    )}
+                  />
                   <Button
                     type="submit"
                     variant="contained"
-                    startIcon={isEditing ? <SaveIcon /> : <AddIcon />}
+                    size="small"
+                    startIcon={isEditing ? <SaveIcon sx={{ fontSize: 16 }} /> : <AddIcon sx={{ fontSize: 16 }} />}
+                    sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '&:hover': { background: 'linear-gradient(135deg, #5568d3 0%, #5a3a7d 100%)' } }}
                   >
-                    {isEditing ? 'Update' : 'Add'}
+                    {isEditing ? 'Update Rule' : 'Add Rule'}
                   </Button>
                   {isEditing && (
-                    <Button variant="outlined" startIcon={<CancelIcon />} onClick={handleCancel}>
+                    <Button variant="outlined" size="small" color="error" startIcon={<CancelIcon sx={{ fontSize: 16 }} />} onClick={handleCancel}>
                       Cancel
                     </Button>
                   )}
@@ -328,20 +242,63 @@ useEffect(() => {
         </CardContent>
       </Card>
 
-      {formData.cancellationRules && formData.cancellationRules.length > 0 ? (
-        <Card>
+      {/* Cancellation Rules Table */}
+      {formData.cancellationRules && formData.cancellationRules.length > 0 && (
+        <Card sx={{ boxShadow: 'none', border: '1px solid #e5e7eb' }}>
           <CardContent>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="subtitle1" fontWeight={700} color="#1e293b" gutterBottom>
               Cancellation Rules
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            <DataGrid title="" data={formData.cancellationRules as any} columns={columns} />
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                    {['Condition', 'Days', 'Amount', 'Type', 'Charge Per', 'Active', 'Actions'].map((h) => (
+                      <TableCell key={h} sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#64748b' }}>{h}</TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(formData.cancellationRules as any[]).map((rule) => (
+                    <TableRow key={rule.id} hover sx={{ '&:last-child td': { border: 0 } }}>
+                      <TableCell>
+                        <Chip
+                          label={rule.condition.charAt(0).toUpperCase() + rule.condition.slice(1)}
+                          size="small"
+                          color={rule.condition === 'before' ? 'warning' : 'info'}
+                          variant="outlined"
+                          sx={{ fontSize: '0.7rem' }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.8125rem' }}>{rule.daysFrom} days</TableCell>
+                      <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                        {rule.amountType === 'percentage' ? `${rule.amount}%` : `${rule.amount}`}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.8125rem' }}>
+                        {rule.amountType === 'percentage' ? 'Percentage' : 'Fixed'}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.8125rem' }}>
+                        {rule.chargeType === 'perBooking' ? 'Per Booking' : 'Per Person'}
+                      </TableCell>
+                      <TableCell>
+                        <Checkbox checked={rule.isActive} disabled size="small" />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton size="small" color="primary" onClick={() => handleEdit(rule)} sx={{ mr: 0.5 }}>
+                          <EditIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                        <IconButton size="small" color="error" onClick={() => handleDelete(rule.id)}>
+                          <DeleteIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </CardContent>
         </Card>
-      ) : (
-        <Alert severity="warning">
-          No cancellation rules added yet. Add at least one rule to proceed.
-        </Alert>
       )}
     </Box>
   );

@@ -41,6 +41,13 @@ const step4Schema = z.object({
 
 type Step4FormData = z.infer<typeof step4Schema>;
 
+const compactFieldSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: 2,
+    backgroundColor: '#fff',
+  },
+};
+
 const Step4UploadImages: React.FC<Step4Props> = ({
   formData,
   updateFormData,
@@ -68,34 +75,23 @@ const Step4UploadImages: React.FC<Step4Props> = ({
   const watchedValues = watch();
 
   useEffect(() => {
-  updateFormData({
-    ...watchedValues,
-    thumbnailImage: thumbnailFile || undefined,  // Changed: null to undefined
-    bigImage: bigImageFile || undefined,         // Changed: null to undefined
-  });
-  onValidationChange(isValid);
-}, [watchedValues, isValid, thumbnailFile, bigImageFile]);
+    updateFormData({
+      ...watchedValues,
+      thumbnailImage: thumbnailFile || undefined,
+      bigImage: bigImageFile || undefined,
+    });
+    // Images are optional for initial creation; step is always valid
+    onValidationChange(true);
+  }, [watchedValues, isValid, thumbnailFile, bigImageFile]);
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
-        return;
-      }
-
+      if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
+      if (file.size > 5 * 1024 * 1024) { alert('File size must be less than 5MB'); return; }
       setThumbnailFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setThumbnailPreview(reader.result as string);
-      };
+      reader.onloadend = () => setThumbnailPreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
@@ -103,66 +99,47 @@ const Step4UploadImages: React.FC<Step4Props> = ({
   const handleBigImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        return;
-      }
-
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert('File size must be less than 10MB');
-        return;
-      }
-
+      if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
+      if (file.size > 10 * 1024 * 1024) { alert('File size must be less than 10MB'); return; }
       setBigImageFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setBigImagePreview(reader.result as string);
-      };
+      reader.onloadend = () => setBigImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
-  const handleRemoveThumbnail = () => {
-    setThumbnailPreview(null);
-    setThumbnailFile(null);
-  };
-
-  const handleRemoveBigImage = () => {
-    setBigImagePreview(null);
-    setBigImageFile(null);
-  };
-
   return (
-    <Box>
-      <Alert severity="info" sx={{ mb: 3 }}>
-        Upload high-quality images for your package. <br />
-        <strong>Thumbnail:</strong> Recommended size 800x600, max 5MB <br />
-        <strong>Big Image:</strong> Recommended size 1920x1080, max 10MB
+    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+      <Alert severity="info" sx={{ mb: 2, '& .MuiAlert-message': { fontSize: '0.8125rem' } }}>
+        Upload high-quality images for your package. &nbsp;
+        <strong>Thumbnail:</strong> Recommended 800×600, max 5MB &nbsp;|&nbsp;
+        <strong>Big Image:</strong> Recommended 1920×1080, max 10MB
       </Alert>
 
-      <Card>
+      <Card sx={{ boxShadow: 'none', border: '1px solid #e5e7eb' }}>
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <ImageIcon sx={{ mr: 1, color: '#f59e0b' }} />
-            <Typography variant="h6">Upload Images</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <ImageIcon sx={{ mr: 1, color: '#f59e0b', fontSize: 28 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>
+              Upload Images
+            </Typography>
           </Box>
 
-          <Grid container spacing={4}>
+          <Grid container spacing={2.5}>
+            {/* Thumbnail */}
             <Grid item xs={12} md={6}>
               <Box className={styles.uploadSection}>
-                <Typography variant="subtitle1" gutterBottom>
+                <Typography variant="body2" fontWeight={600} gutterBottom>
                   Thumbnail
                 </Typography>
                 {thumbnailPreview ? (
                   <Box className={styles.imagePreview}>
                     <img src={thumbnailPreview} alt="Thumbnail Preview" />
-                    <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                    <Box sx={{ mt: 1, display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center' }}>
                       <Typography variant="caption" color="textSecondary">
-                        {thumbnailFile?.name} ({(thumbnailFile?.size || 0 / 1024).toFixed(2)} KB)
+                        {thumbnailFile?.name} ({((thumbnailFile?.size || 0) / 1024).toFixed(1)} KB)
                       </Typography>
-                      <Button size="small" variant="outlined" onClick={handleRemoveThumbnail}>
+                      <Button size="small" variant="outlined" color="error" onClick={() => { setThumbnailPreview(null); setThumbnailFile(null); }}>
                         Remove
                       </Button>
                     </Box>
@@ -173,7 +150,8 @@ const Step4UploadImages: React.FC<Step4Props> = ({
                     variant="outlined"
                     startIcon={<CloudUpload />}
                     fullWidth
-                    sx={{ height: 150, borderStyle: 'dashed' }}
+                    size="small"
+                    sx={{ height: 120, borderStyle: 'dashed', borderRadius: 2 }}
                   >
                     Choose Thumbnail
                     <input type="file" hidden accept="image/*" onChange={handleThumbnailChange} />
@@ -182,19 +160,20 @@ const Step4UploadImages: React.FC<Step4Props> = ({
               </Box>
             </Grid>
 
+            {/* Big Image */}
             <Grid item xs={12} md={6}>
               <Box className={styles.uploadSection}>
-                <Typography variant="subtitle1" gutterBottom>
+                <Typography variant="body2" fontWeight={600} gutterBottom>
                   Big Image
                 </Typography>
                 {bigImagePreview ? (
                   <Box className={styles.imagePreview}>
                     <img src={bigImagePreview} alt="Big Image Preview" />
-                    <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                    <Box sx={{ mt: 1, display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center' }}>
                       <Typography variant="caption" color="textSecondary">
-                        {bigImageFile?.name} ({((bigImageFile?.size || 0) / 1024).toFixed(2)} KB)
+                        {bigImageFile?.name} ({((bigImageFile?.size || 0) / 1024).toFixed(1)} KB)
                       </Typography>
-                      <Button size="small" variant="outlined" onClick={handleRemoveBigImage}>
+                      <Button size="small" variant="outlined" color="error" onClick={() => { setBigImagePreview(null); setBigImageFile(null); }}>
                         Remove
                       </Button>
                     </Box>
@@ -205,7 +184,8 @@ const Step4UploadImages: React.FC<Step4Props> = ({
                     variant="outlined"
                     startIcon={<CloudUpload />}
                     fullWidth
-                    sx={{ height: 150, borderStyle: 'dashed' }}
+                    size="small"
+                    sx={{ height: 120, borderStyle: 'dashed', borderRadius: 2 }}
                   >
                     Choose Big Image
                     <input type="file" hidden accept="image/*" onChange={handleBigImageChange} />
@@ -214,7 +194,8 @@ const Step4UploadImages: React.FC<Step4Props> = ({
               </Box>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            {/* Image Tag */}
+            <Grid item xs={12} md={4}>
               <Controller
                 name="imageTag"
                 control={control}
@@ -222,38 +203,35 @@ const Step4UploadImages: React.FC<Step4Props> = ({
                   <TextField
                     {...field}
                     fullWidth
+                    size="small"
                     label="Image Tag"
-                    error={!!errors.imageTag}
-                    helperText={errors.imageTag?.message || 'Optional: Add keywords or tags'}
+                    sx={compactFieldSx}
+                    helperText="Optional: Add keywords or tags"
                   />
                 )}
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <FormControl component="fieldset" error={!!errors.imageAttribute}>
-                <FormLabel>Attributes *</FormLabel>
+            {/* Attributes */}
+            <Grid item xs={12} md={4}>
+              <FormControl component="fieldset" error={!!errors.imageAttribute} size="small">
+                <FormLabel sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>Attributes *</FormLabel>
                 <Controller
                   name="imageAttribute"
                   control={control}
                   render={({ field }) => (
                     <RadioGroup {...field} row>
-                      <FormControlLabel value="default" control={<Radio />} label="Default" />
-                      <FormControlLabel
-                        value="virtualTour"
-                        control={<Radio />}
-                        label="Virtual Tour"
-                      />
+                      <FormControlLabel value="default" control={<Radio size="small" />} label={<Typography variant="body2">Default</Typography>} />
+                      <FormControlLabel value="virtualTour" control={<Radio size="small" />} label={<Typography variant="body2">Virtual Tour</Typography>} />
                     </RadioGroup>
                   )}
                 />
-                {errors.imageAttribute && (
-                  <FormHelperText>{errors.imageAttribute.message}</FormHelperText>
-                )}
+                {errors.imageAttribute && <FormHelperText>{errors.imageAttribute.message}</FormHelperText>}
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            {/* Image For */}
+            <Grid item xs={12} md={4}>
               <Controller
                 name="imageFor"
                 control={control}
@@ -262,7 +240,9 @@ const Step4UploadImages: React.FC<Step4Props> = ({
                     {...field}
                     select
                     fullWidth
+                    size="small"
                     label="Image For *"
+                    sx={compactFieldSx}
                     error={!!errors.imageFor}
                     helperText={errors.imageFor?.message}
                   >
