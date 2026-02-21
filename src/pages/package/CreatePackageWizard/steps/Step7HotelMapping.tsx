@@ -12,6 +12,14 @@ import {
   Divider,
   Checkbox,
   FormControlLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -24,8 +32,6 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { DataGrid } from '@/components/common/DataGrid';
-import type { Column } from '@/components/common/DataGrid';
 import type { CreatePackageRequest } from '@/services/package/package.models';
 
 interface Step7Props {
@@ -45,8 +51,12 @@ const hotelSchema = z.object({
 
 type HotelFormData = z.infer<typeof hotelSchema>;
 
+const compactFieldSx = {
+  '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#fff' },
+};
+
 const Step7HotelMapping: React.FC<Step7Props> = ({ formData, updateFormData, onValidationChange }) => {
- const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [bigImagePreview, setBigImagePreview] = useState<string | null>(null);
@@ -63,69 +73,31 @@ const Step7HotelMapping: React.FC<Step7Props> = ({ formData, updateFormData, onV
     { id: 3, name: '5 Star' },
   ];
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm<HotelFormData>({
+  const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<HotelFormData>({
     resolver: zodResolver(hotelSchema),
-    defaultValues: {
-      cityId: 0,
-      hotelCategoryId: 0,
-      hotelName: '',
-      description: '',
-      imageTag: '',
-      isActive: true,
-    },
+    defaultValues: { cityId: 0, hotelCategoryId: 0, hotelName: '', description: '', imageTag: '', isActive: true },
   });
+
+  useEffect(() => {
+    // Hotel mapping is optional
+    onValidationChange(true);
+  }, [formData.hotels, onValidationChange]);
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setThumbnailPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (file) { const r = new FileReader(); r.onloadend = () => setThumbnailPreview(r.result as string); r.readAsDataURL(file); }
   };
-
- useEffect(() => {
-  const isValid = (formData.hotels || []).length > 0;
-  onValidationChange(isValid);
-}, [formData.hotels, onValidationChange]);
-
 
   const handleBigImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBigImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (file) { const r = new FileReader(); r.onloadend = () => setBigImagePreview(r.result as string); r.readAsDataURL(file); }
   };
 
   const onSubmit = (data: HotelFormData) => {
-    const newHotel: any = {
-      ...data,
-      id: isEditing ? editingId : Date.now(),
-      thumbnailImage: thumbnailPreview,
-      bigImage: bigImagePreview,
-    };
-
-    let updatedHotels;
-    if (isEditing && editingId) {
-      updatedHotels = (formData.hotels || []).map((hotel: any) =>
-        hotel.id === editingId ? newHotel : hotel
-      );
-    } else {
-      updatedHotels = [...(formData.hotels || []), newHotel];
-    }
-
+    const newHotel: any = { ...data, id: isEditing ? editingId : Date.now(), thumbnailImage: thumbnailPreview, bigImage: bigImagePreview };
+    const updatedHotels = isEditing && editingId
+      ? (formData.hotels || []).map((h: any) => h.id === editingId ? newHotel : h)
+      : [...(formData.hotels || []), newHotel];
     updateFormData({ hotels: updatedHotels });
     handleCancel();
   };
@@ -144,8 +116,7 @@ const Step7HotelMapping: React.FC<Step7Props> = ({ formData, updateFormData, onV
   };
 
   const handleDelete = (id: number) => {
-    const updatedHotels = (formData.hotels || []).filter((hotel: any) => hotel.id !== id);
-    updateFormData({ hotels: updatedHotels });
+    updateFormData({ hotels: (formData.hotels || []).filter((h: any) => h.id !== id) });
   };
 
   const handleCancel = () => {
@@ -156,99 +127,41 @@ const Step7HotelMapping: React.FC<Step7Props> = ({ formData, updateFormData, onV
     setBigImagePreview(null);
   };
 
-  const columns: Column<any>[] = [
-    {
-      key: 'cityId',
-      label: 'City',
-      render: (item) => cities.find((c) => c.id === item.cityId)?.name || '--',
-    },
-    {
-      key: 'hotelCategoryId',
-      label: 'Category',
-      render: (item) => categories.find((c) => c.id === item.hotelCategoryId)?.name || '--',
-    },
-    { key: 'hotelName', label: 'Hotel Name', sortable: true },
-    {
-      key: 'isActive',
-      label: 'Status',
-      render: (item) => (
-        <span style={{ color: item.isActive ? 'green' : 'red', fontWeight: 'bold' }}>
-          {item.isActive ? 'Active' : 'Inactive'}
-        </span>
-      ),
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (item) => (
-        <Box>
-          <IconButton size="small" color="primary" onClick={() => handleEdit(item)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" color="error" onClick={() => handleDelete(item.id)}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ];
-
   return (
-    <Box>
-      <Card sx={{ mb: 3 }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+      <Card sx={{ mb: 3, boxShadow: 'none', border: '1px solid #e5e7eb' }}>
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ color: '#f59e0b' }}>
-              Hotel Detail
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>
+              Hotel Details
             </Typography>
+            <Chip label="Optional" size="small" sx={{ ml: 1.5, bgcolor: '#f0fdf4', color: '#16a34a', fontSize: '0.7rem' }} />
           </Box>
-          <Divider sx={{ mb: 3 }} />
+          <Divider sx={{ mb: 2 }} />
 
           <form onSubmit={handleSubmit(onSubmit)}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
+            <Grid container spacing={2.5}>
+              <Grid item xs={12} md={3}>
                 <Controller
                   name="cityId"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      select
-                      fullWidth
-                      label="City *"
-                      error={!!errors.cityId}
-                      helperText={errors.cityId?.message}
-                    >
+                    <TextField {...field} select fullWidth size="small" label="City *" sx={compactFieldSx} error={!!errors.cityId} helperText={errors.cityId?.message}>
                       <MenuItem value={0}>--Select City--</MenuItem>
-                      {cities.map((city) => (
-                        <MenuItem key={city.id} value={city.id}>
-                          {city.name}
-                        </MenuItem>
-                      ))}
+                      {cities.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
                     </TextField>
                   )}
                 />
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={3}>
                 <Controller
                   name="hotelCategoryId"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      select
-                      fullWidth
-                      label="Category *"
-                      error={!!errors.hotelCategoryId}
-                      helperText={errors.hotelCategoryId?.message}
-                    >
+                    <TextField {...field} select fullWidth size="small" label="Category *" sx={compactFieldSx} error={!!errors.hotelCategoryId} helperText={errors.hotelCategoryId?.message}>
                       <MenuItem value={0}>--Select Category--</MenuItem>
-                      {categories.map((cat) => (
-                        <MenuItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </MenuItem>
-                      ))}
+                      {categories.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
                     </TextField>
                   )}
                 />
@@ -259,13 +172,17 @@ const Step7HotelMapping: React.FC<Step7Props> = ({ formData, updateFormData, onV
                   name="hotelName"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label="Hotel Name *"
-                      error={!!errors.hotelName}
-                      helperText={errors.hotelName?.message}
-                    />
+                    <TextField {...field} fullWidth size="small" label="Hotel Name *" sx={compactFieldSx} error={!!errors.hotelName} helperText={errors.hotelName?.message} />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={2}>
+                <Controller
+                  name="imageTag"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField {...field} fullWidth size="small" label="Image Tag" sx={compactFieldSx} />
                   )}
                 />
               </Grid>
@@ -275,103 +192,60 @@ const Step7HotelMapping: React.FC<Step7Props> = ({ formData, updateFormData, onV
                   name="description"
                   control={control}
                   render={({ field }) => (
-                    <TextField {...field} fullWidth multiline rows={3} label="Description" />
+                    <TextField {...field} fullWidth size="small" multiline rows={2} label="Description" sx={compactFieldSx} />
                   )}
                 />
               </Grid>
 
-              <Grid item xs={12} md={4}>
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Thumbnail
-                  </Typography>
-                  {thumbnailPreview ? (
-                    <Box>
-                      <img
-                        src={thumbnailPreview}
-                        alt="Thumbnail"
-                        style={{ width: '100%', maxHeight: 150, objectFit: 'cover', borderRadius: 8 }}
-                      />
-                      <Button size="small" onClick={() => setThumbnailPreview(null)} sx={{ mt: 1 }}>
-                        Remove
-                      </Button>
-                    </Box>
-                  ) : (
-                    <Button
-                      component="label"
-                      variant="outlined"
-                      startIcon={<CloudUpload />}
-                      fullWidth
-                    >
-                      Choose File
-                      <input type="file" hidden accept="image/*" onChange={handleThumbnailChange} />
-                    </Button>
-                  )}
-                </Box>
+              {/* Images */}
+              <Grid item xs={12} md={5}>
+                <Typography variant="caption" fontWeight={600} display="block" gutterBottom>Thumbnail</Typography>
+                {thumbnailPreview ? (
+                  <Box>
+                    <img src={thumbnailPreview} alt="Thumbnail" style={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 8 }} />
+                    <Button size="small" onClick={() => setThumbnailPreview(null)} sx={{ mt: 0.5 }}>Remove</Button>
+                  </Box>
+                ) : (
+                  <Button component="label" variant="outlined" startIcon={<CloudUpload sx={{ fontSize: 16 }} />} size="small" fullWidth sx={{ borderStyle: 'dashed', borderRadius: 2 }}>
+                    Choose Thumbnail
+                    <input type="file" hidden accept="image/*" onChange={handleThumbnailChange} />
+                  </Button>
+                )}
               </Grid>
 
-              <Grid item xs={12} md={4}>
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Big Image
-                  </Typography>
-                  {bigImagePreview ? (
-                    <Box>
-                      <img
-                        src={bigImagePreview}
-                        alt="Big Image"
-                        style={{ width: '100%', maxHeight: 150, objectFit: 'cover', borderRadius: 8 }}
-                      />
-                      <Button size="small" onClick={() => setBigImagePreview(null)} sx={{ mt: 1 }}>
-                        Remove
-                      </Button>
-                    </Box>
-                  ) : (
-                    <Button
-                      component="label"
-                      variant="outlined"
-                      startIcon={<CloudUpload />}
-                      fullWidth
-                    >
-                      Choose File
-                      <input type="file" hidden accept="image/*" onChange={handleBigImageChange} />
-                    </Button>
-                  )}
-                </Box>
+              <Grid item xs={12} md={5}>
+                <Typography variant="caption" fontWeight={600} display="block" gutterBottom>Big Image</Typography>
+                {bigImagePreview ? (
+                  <Box>
+                    <img src={bigImagePreview} alt="Big Image" style={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 8 }} />
+                    <Button size="small" onClick={() => setBigImagePreview(null)} sx={{ mt: 0.5 }}>Remove</Button>
+                  </Box>
+                ) : (
+                  <Button component="label" variant="outlined" startIcon={<CloudUpload sx={{ fontSize: 16 }} />} size="small" fullWidth sx={{ borderStyle: 'dashed', borderRadius: 2 }}>
+                    Choose Big Image
+                    <input type="file" hidden accept="image/*" onChange={handleBigImageChange} />
+                  </Button>
+                )}
               </Grid>
 
-              <Grid item xs={12} md={4}>
-                <Controller
-                  name="imageTag"
-                  control={control}
-                  render={({ field }) => <TextField {...field} fullWidth label="Image Tag" />}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
+              <Grid item xs={12} md={2} sx={{ display: 'flex', alignItems: 'flex-end' }}>
                 <Controller
                   name="isActive"
                   control={control}
                   render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} />}
-                      label="Active"
-                    />
+                    <FormControlLabel control={<Checkbox {...field} checked={field.value} size="small" />} label={<Typography variant="body2">Active</Typography>} />
                   )}
                 />
               </Grid>
 
               <Grid item xs={12}>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    startIcon={isEditing ? <SaveIcon /> : <AddIcon />}
-                  >
-                    {isEditing ? 'Update' : 'Add'}
+                <Box sx={{ display: 'flex', gap: 1.5 }}>
+                  <Button type="submit" variant="contained" size="small" startIcon={isEditing ? <SaveIcon sx={{ fontSize: 16 }} /> : <AddIcon sx={{ fontSize: 16 }} />}
+                    sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '&:hover': { background: 'linear-gradient(135deg, #5568d3 0%, #5a3a7d 100%)' } }}>
+                    {isEditing ? 'Update' : 'Add Hotel'}
                   </Button>
                   {isEditing && (
-                    <Button variant="outlined" startIcon={<CancelIcon />} onClick={handleCancel}>
+                    <Button variant="outlined" size="small" color="error" startIcon={<CancelIcon sx={{ fontSize: 16 }} />} onClick={handleCancel}>
                       Cancel
                     </Button>
                   )}
@@ -382,14 +256,45 @@ const Step7HotelMapping: React.FC<Step7Props> = ({ formData, updateFormData, onV
         </CardContent>
       </Card>
 
+      {/* Hotels Table */}
       {formData.hotels && formData.hotels.length > 0 && (
-        <Card>
+        <Card sx={{ boxShadow: 'none', border: '1px solid #e5e7eb' }}>
           <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Update Record
+            <Typography variant="subtitle1" fontWeight={700} color="#1e293b" gutterBottom>
+              Added Hotels
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            <DataGrid title="" data={formData.hotels as any} columns={columns} />
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                    {['City', 'Category', 'Hotel Name', 'Status', 'Actions'].map((h) => (
+                      <TableCell key={h} sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#64748b' }}>{h}</TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(formData.hotels as any[]).map((hotel) => (
+                    <TableRow key={hotel.id} hover sx={{ '&:last-child td': { border: 0 } }}>
+                      <TableCell sx={{ fontSize: '0.8125rem' }}>{cities.find((c) => c.id === hotel.cityId)?.name || '--'}</TableCell>
+                      <TableCell sx={{ fontSize: '0.8125rem' }}>{categories.find((c) => c.id === hotel.hotelCategoryId)?.name || '--'}</TableCell>
+                      <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 500 }}>{hotel.hotelName}</TableCell>
+                      <TableCell>
+                        <Chip label={hotel.isActive ? 'Active' : 'Inactive'} size="small" color={hotel.isActive ? 'success' : 'default'} variant="outlined" sx={{ fontSize: '0.7rem' }} />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton size="small" color="primary" onClick={() => handleEdit(hotel)} sx={{ mr: 0.5 }}>
+                          <EditIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                        <IconButton size="small" color="error" onClick={() => handleDelete(hotel.id)}>
+                          <DeleteIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </CardContent>
         </Card>
       )}
@@ -398,4 +303,3 @@ const Step7HotelMapping: React.FC<Step7Props> = ({ formData, updateFormData, onV
 };
 
 export default Step7HotelMapping;
-

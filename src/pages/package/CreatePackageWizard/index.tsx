@@ -58,7 +58,7 @@ const CreatePackageWizard: React.FC = () => {
   const [formData, setFormData] = useState<Partial<CreatePackageRequest>>({
     regionId: 0,
     countryIds: [],
-    languageCode: 'English',
+    languageCode: '',
     holidayCategoryCode: '',
     holidayTypeIds: [],
     packageName: '',
@@ -216,7 +216,8 @@ const CreatePackageWizard: React.FC = () => {
   const handleSaveDraft = async () => {
     setIsLoading(true);
     try {
-      localStorage.setItem('packageDraft', JSON.stringify(formData));
+      //localStorage.setItem('packageDraft', JSON.stringify(formData));
+      localStorage.clear();
       setMessage({ type: 'success', text: 'Draft saved successfully' });
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message || 'Failed to save draft' });
@@ -343,12 +344,12 @@ const CreatePackageWizard: React.FC = () => {
           </Button>
         </Box>
 
-        <Box sx={{ mb: 2 }}>
+        {/* <Box sx={{ mb: 2 }}>
           <LinearProgress variant="determinate" value={progressPercentage} sx={{ height: 8, borderRadius: 4 }} />
           <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
             {completedSteps} of {steps.length} steps completed
           </Typography>
-        </Box>
+        </Box> */}
 
         <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
           {steps.map((label, index) => (

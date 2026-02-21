@@ -9,17 +9,26 @@
 }
 
 .content {
-  flex: 1;
-  padding: 2rem;
+  flex-grow: 1;
+  width: 100%;
+  margin-left: 0;
   transition: margin-left 0.3s ease;
+  margin-top: 65px;
 }
 
 .contentShifted {
-  margin-left: 80px;
+  margin-left: -130px; /* Match new drawer width */
 }
 
-.contentShiftedFull {
-  margin-left: 280px;
+.contentShiftedCollapsed {
+  margin-left: 60px; /* Match new collapsed width */
+}
+
+/* Ensure full width usage */
+.mainContent {
+  width: 100%;
+  height: calc(100vh - 64px);
+  overflow: hidden;
 }
 
 @media (max-width: 960px) {
