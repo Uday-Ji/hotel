@@ -29,7 +29,7 @@ import type { CreatePackageRequest, PriceDetail } from '@/services/package/packa
 interface Step8Props {
   formData: Partial<CreatePackageRequest>;
   updateFormData: (data: Partial<CreatePackageRequest>) => void;
-  onValidationChange: (isValid: boolean) => void;
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 const costingSchema = z.object({
@@ -108,7 +108,7 @@ const Step8PackageCosting: React.FC<Step8Props> = ({ formData, updateFormData, o
       watchedValues.packageCategoryId > 0 &&
       !!watchedValues.validityFrom &&
       !!watchedValues.validityTo;
-    onValidationChange(isValid);
+    onValidationChange?.(isValid);
   }, [watchedValues, priceDetails]);
 
   const handlePriceChange = (index: number, field: keyof PriceDetail, value: string | number | boolean) => {

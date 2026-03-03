@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
@@ -24,10 +24,6 @@ const ModuleLayout: React.FC = () => {
     }
   }, [location.pathname, dispatch]);
 
-  
-  const handleSidebarToggle = () => {
-    //setSidebarCollapsed(!sidebarCollapsed);
-  };
 
 const handleMenuClick = () => {
     //setSidebarOpen(!sidebarOpen);

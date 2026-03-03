@@ -37,7 +37,7 @@ import type { CreatePackageRequest } from '@/services/package/package.models';
 interface Step7Props {
   formData: Partial<CreatePackageRequest>;
   updateFormData: (data: Partial<CreatePackageRequest>) => void;
-  onValidationChange: (isValid: boolean) => void;
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 const hotelSchema = z.object({
@@ -80,7 +80,7 @@ const Step7HotelMapping: React.FC<Step7Props> = ({ formData, updateFormData, onV
 
   useEffect(() => {
     // Hotel mapping is optional
-    onValidationChange(true);
+    onValidationChange?.(true);
   }, [formData.hotels, onValidationChange]);
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {

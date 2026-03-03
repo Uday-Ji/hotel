@@ -1,38 +1,86 @@
+/* 
+  KEY FIX: The wizard Paper becomes a flex column with fixed height.
+  Scroll happens INSIDE .scrollBody, not on the page — 
+  so .header and .tabsSticky remain pinned at the top of the Paper.
+*/
+
 .container {
   width: 100%;
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  /* Make container fill the viewport height so the wizard can scroll internally */
+  height: calc(100vh - 4rem); /* subtract vertical padding */
+  display: flex;
+  flex-direction: column;
 }
 
 .paper {
-  padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  /* Fill remaining space and become the scroll host */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* clip children — scroll lives in .scrollBody */
+  min-height: 0;    /* flex child must opt in to shrink below content size */
 }
 
+/* ── Sticky header ── */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f3f4f6;
+  padding: 16px 24px 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(229, 231, 235, 0.8);
+  flex-shrink: 0; /* never shrink — stays at top */
+  z-index: 120;
 }
 
 .title {
   color: #1f2937;
   font-weight: 700;
-}
-
-.stepContent {
-  min-height: 400px;
-  margin-bottom: 3rem;
+  font-size: 22px;
+  margin: 0;
 }
 
 .actions {
   display: flex;
-  justify-content: space-between;
-  padding-top: 2rem;
-  border-top: 2px solid #f3f4f6;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Sticky tabs row (sits immediately below header) ── */
+.tabsRow {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 0 16px;
+  flex-shrink: 0; /* never shrink — stays below header */
+  z-index: 110;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+}
+.tabsRow::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* ── Scrollable body ── */
+.scrollBody {
+  flex: 1;           /* take all remaining vertical space */
+  overflow-y: auto;  /* THIS is where scrolling happens */
+  min-height: 0;     /* flex child must opt in */
+  padding: 24px 24px 48px;
+  background: #f9fafb;
+}
+
+/* Legacy aliases kept for backwards compat */
+.tabsSticky {
+  composes: tabsRow;
+}
+
+.stepContent {
+  min-height: 400px;
 }

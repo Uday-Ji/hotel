@@ -37,7 +37,6 @@ import {
   Search as SearchIcon,
   FilterList as FilterIcon,
   Edit as EditIcon,
-  Visibility as ViewIcon,
   LocalOffer as DealIcon,
   Star as RecommendedIcon,
   ShoppingCart as FreeSellIcon,
@@ -185,12 +184,6 @@ const handleStatusUpdateSuccess = () => {
     setSelectedPackage(null);
   };
 
-  const handleView = () => {
-    if (selectedPackage) {
-      navigate(`/package/view/${selectedPackage.packageId}`);
-    }
-    handleMenuClose();
-  };
 
   const handleEdit = () => {
     if (selectedPackage) {

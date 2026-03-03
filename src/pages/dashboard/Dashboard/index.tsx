@@ -5,6 +5,7 @@ import {
  
   Box,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 // import {
 //   Hotel as HotelIcon,
 //   Book as BookingIcon,
@@ -133,7 +134,11 @@ import { useAppSelector } from '@/store/hooks';
 
 const Dashboard: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
-  
+   const navigate = useNavigate();
+    if (user === null) {
+            console.log('No user, redirecting to login...');
+            navigate('/login'); // Replace '/login' with your login path
+        }
 console.log('Dashboard user:', user);
   return (
     <Box className={styles.dashboardWrapper}>

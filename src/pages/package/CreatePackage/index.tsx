@@ -14,11 +14,10 @@ import {
 } from '@mui/material';
 import { Place as PlaceIcon } from '@mui/icons-material';
 //import { regionService } from '@/services/common/region.service';
-//import type { Region, Country } from '@/services/common/region.models';
+import type { Country } from '@/services/master/country.models';
 import styles from './CreatePackage.module.css';
 import { Region } from '@/services/common/region.models';
 import { regionService } from '@/services/common/region.service';
-import { Country } from '@/services/master/country.models';
 
 const CreatePackage: React.FC = () => {
   const [regions, setRegions] = useState<Region[]>([]);
@@ -50,7 +49,7 @@ const CreatePackage: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await regionService.getCountryByRegion(regionId);
-      setCountries(data);
+      setCountries(data as any);
     } catch (error) {
       console.error('Failed to fetch countries:', error);
     } finally {

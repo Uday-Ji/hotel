@@ -1,45 +1,37 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams }    from 'react-router-dom';
+import { ToastContainer, toast }     from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { Box, Paper, Button, Typography, LinearProgress } from '@mui/material';
+import { CircularProgress } from '@mui/material';
+import { CheckCircle }               from '@mui/icons-material';
+import StepPackageDetail             from './steps/StepPackageDetail';
+import Step4UploadImages             from './steps/Step4UploadImages';
+import Step5ItineraryManage          from './steps/Step5ItineraryManage';
+import Step6DestinationDetails       from './steps/Step6DestinationDetails';
+import Step7HotelMapping             from './steps/Step7HotelMapping';
+import Step8PackageCosting           from './steps/Step8PackageCosting';
+import Step9CancellationRules        from './steps/Step9CancellationRules';
+import { packageService }            from '@/services/package/package.service';
 import {
-  Box,
-  Paper,
-  Stepper,
-  Step,
-  StepLabel,
-  Button,
-  Typography,
-  Alert,
-  LinearProgress,
-} from '@mui/material';
-import { ArrowBack, ArrowForward, Save, CheckCircle } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import Step1SelectRegion from './steps/Step1SelectRegion';
-import Step2PackageDetails from './steps/Step2PackageDetails';
-import Step3PackageValidity from './steps/Step3PackageValidity';
-import Step4UploadImages from './steps/Step4UploadImages';
-import Step5ItineraryManage from './steps/Step5ItineraryManage';
-import Step6DestinationDetails from './steps/Step6DestinationDetails';
-import Step7HotelMapping from './steps/Step7HotelMapping';
-import Step8PackageCosting from './steps/Step8PackageCosting';
-import Step9CancellationRules from './steps/Step9CancellationRules';
-import { packageService } from '@/services/package/package.service';
-import type { CreatePackageRequest } from '@/services/package/package.models';
+  DEFAULT_FORM_DATA,
+  type PackageFormData,
+  type HolidayCategory,
+  type HolidayType,
+  type Language,
+  type Market,
+  type PackageSupplier,
+} from '@/services/package/package.models';
 import {
-  step1Schema,
-  step2Schema,
-  step3Schema,
-  step4Schema,
-  step5Schema,
-  step6Schema,
-  step7Schema,
-  step8Schema,
-  step9Schema,
+  step1Schema, step2Schema, step3Schema, atLeastOneDay,
+  step4Schema, step5Schema, step6Schema, step7Schema, step8Schema, step9Schema,
 } from './schemas/validationSchemas';
 import styles from './CreatePackageWizard.module.css';
 
-const steps = [
-  'Region & Country',
-  'Package Details',
-  'Package Validity',
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const TABS = [
+  'Package Detail',     // Steps 1+2+3 merged into StepPackageDetail
   'Upload Images',
   'Itinerary',
   'Destination',
@@ -48,364 +40,302 @@ const steps = [
   'Cancellation Rules',
 ];
 
-const CreatePackageWizard: React.FC = () => {
-  const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [stepValidations, setStepValidations] = useState<boolean[]>(new Array(9).fill(false));
+const DEFAULT_COMPONENTS = [
+  { id: 1, name: 'Hotel' },
+  { id: 2, name: 'Meals' },
+  { id: 3, name: 'Tour Guide' },
+  { id: 4, name: 'Transport' },
+  { id: 5, name: 'Sightseeing' },
+];
 
-  const [formData, setFormData] = useState<Partial<CreatePackageRequest>>({
-    regionId: 0,
-    countryIds: [],
-    languageCode: '',
-    holidayCategoryCode: '',
-    holidayTypeIds: [],
-    packageName: '',
-    departureCityIds: [],
-    packageCode: '',
-    packageComponents: [],
-    destinationCityIds: [],
-    isActive: true,
-    tourType: 'fixed',
-    validDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    durationDays: 1,
-    isRecommended: false,
-    isDeals: false,
-    bookingType: 'offline',
-    isFreeSell: false,
-    imageAttribute: 'default',
-    imageFor: 'package',
-    itineraryDays: [],
-    destinations: [],
-    hotels: [],
-    cancellationRules: [],
+interface DropdownState {
+  regions:           any[];
+  countries:         any[];
+  holidayCategories: HolidayCategory[];
+  holidayTypes:      HolidayType[];
+  languages:         Language[];
+  markets:           Market[];
+  cities:            any[];
+  suppliers:         PackageSupplier[];
+  packageComponents: { id: number; name: string }[];
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+const CreatePackageWizard: React.FC = () => {
+  const navigate                   = useNavigate();
+  const { id: routePackageId }     = useParams<{ id: string }>();
+
+  const [activeTab,        setActiveTab]        = useState(0);
+  // Track validity and dirty state for Package Detail tab
+  const [packageDetailValid, setPackageDetailValid] = useState(false);
+  const [packageDetailDirty, setPackageDetailDirty] = useState(false);
+  const [isLoading,        setIsLoading]        = useState(false);
+  const [dropdownsLoading, setDropdownsLoading] = useState(true);
+  const [editReady,        setEditReady]        = useState(!routePackageId);
+  const [packageId,        setPackageId]        = useState<number | null>(null);
+  const [isEditMode,       setIsEditMode]       = useState(!!routePackageId);
+  const [formData,         setFormData]         = useState<PackageFormData>(DEFAULT_FORM_DATA);
+
+  const [dropdowns, setDropdowns] = useState<DropdownState>({
+    regions: [], countries: [], holidayCategories: [], holidayTypes: [],
+    languages: [], markets: [], cities: [], suppliers: [],
+    packageComponents: DEFAULT_COMPONENTS,
   });
 
-  // Load draft from localStorage on mount
+  // ── 1. Bootstrap ──────────────────────────────────────────────────────────
+
   useEffect(() => {
-    const savedDraft = localStorage.getItem('packageDraft');
-    if (savedDraft) {
-      try {
-        const parsedDraft = JSON.parse(savedDraft);
-        setFormData(parsedDraft);
-      } catch (error) {
-        console.error('Failed to load draft:', error);
-      }
-    }
+    setDropdownsLoading(true);
+    Promise.all([
+      packageService.getRegionList(),
+      packageService.getHolidayCategoryList(),
+      packageService.getLanguageList(),
+      packageService.getMarketList(),
+      packageService.getCitiesList(),
+      packageService.PackageSuppliersList(),
+    ])
+      .then(async ([regions, holidayCategories, languages, markets, cities, suppliers]) => {
+        setDropdowns((p) => ({ ...p, regions, holidayCategories, languages, markets, cities, suppliers }));
+
+        if (routePackageId) {
+          setIsLoading(true);
+          try {
+            const data = await packageService.getPackageById(Number(routePackageId));
+            const [countries, holidayTypes] = await Promise.all([
+              data.regionId   ? packageService.getCountryByRegion(data.regionId)         : Promise.resolve([]),
+              data.categoryId ? packageService.getHolidayTypeList(data.categoryId)       : Promise.resolve([]),
+            ]);
+            setDropdowns((p) => ({ ...p, countries, holidayTypes }));
+            setFormData(data);
+            setPackageId(Number(routePackageId));
+            setEditReady(true);
+          } catch {
+            toast.error('Failed to load package data');
+          } finally {
+            setIsLoading(false);
+          }
+        }
+      })
+      .catch(() => toast.error('Failed to load dropdown data'))
+      .finally(() => setDropdownsLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleStepValidationChange = (stepIndex: number, isValid: boolean) => {
-    setStepValidations((prev) => {
-      const updated = [...prev];
-      updated[stepIndex] = isValid;
-      return updated;
-    });
-  };
+  // ── 2. Cascade: countries on region change (create mode only) ─────────────
 
-  const updateFormData = (data: Partial<CreatePackageRequest>) => {
+  useEffect(() => {
+    if (!formData.regionId || isEditMode) return;
+    packageService.getCountryByRegion(formData.regionId)
+      .then((countries) => setDropdowns((p) => ({ ...p, countries })))
+      .catch(()         => setDropdowns((p) => ({ ...p, countries: [] })));
+  }, [formData.regionId, isEditMode]);
+
+  // ── 3. Cascade: holiday types on category change (create mode only) ───────
+
+  useEffect(() => {
+    if (!formData.categoryId || isEditMode) return;
+    packageService.getHolidayTypeList(formData.categoryId)
+      .then((holidayTypes) => setDropdowns((p) => ({ ...p, holidayTypes })))
+      .catch(()            => setDropdowns((p) => ({ ...p, holidayTypes: [] })));
+  }, [formData.categoryId, isEditMode]);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  const updateFormData = (data: Partial<PackageFormData>) =>
     setFormData((prev) => ({ ...prev, ...data }));
-  };
 
-  const validateCurrentStep = (): boolean => {
+  // ── Validation — exact field names, no aliasing ───────────────────────────
+
+  const validateCurrentTab = (): boolean => {
     try {
-      switch (activeStep) {
+      switch (activeTab) {
         case 0:
-          step1Schema.parse({
-            regionId: formData.regionId,
-            countryIds: formData.countryIds,
-          });
-          break;
-        case 1:
+          step1Schema.parse({ regionId: formData.regionId, countryIds: formData.countryIds });
           step2Schema.parse({
-            languageCode: formData.languageCode,
-            holidayCategoryCode: formData.holidayCategoryCode,
-            holidayTypeIds: formData.holidayTypeIds,
-            packageName: formData.packageName,
-            departureCityIds: formData.departureCityIds,
-            packageCode: formData.packageCode,
-            packageComponents: formData.packageComponents,
-            destinationCityIds: formData.destinationCityIds,
-            supplierName: formData.supplierName,
-            remarks: formData.remarks,
-            isActive: formData.isActive,
+            categoryId: formData.categoryId, holidayType: formData.holidayType,
+            packageName: formData.packageName, packageCode: formData.packageCode,
+            departCityList: formData.departCityList, componentType: formData.componentType,
+            cityId: formData.cityId, languageCode: formData.languageCode,
+            supplierId: formData.supplierId, remarks: formData.remarks, status: formData.status,
           });
-          break;
-        case 2:
           step3Schema.parse({
-            tourType: formData.tourType,
-            marketId: formData.marketId,
-            validityFrom: formData.validityFrom,
-            validityTo: formData.validityTo,
-            bookingFrom: formData.bookingFrom,
-            bookingTo: formData.bookingTo,
-            validDays: formData.validDays,
-            durationDays: formData.durationDays,
-            isRecommended: formData.isRecommended,
-            isDeals: formData.isDeals,
-            seqNo: formData.seqNo,
-            bookingType: formData.bookingType,
-            isFreeSell: formData.isFreeSell,
-            briefDescription: formData.briefDescription,
-            fullDescription: formData.fullDescription,
+            tourType: formData.tourType, marketType: formData.marketType, days: formData.days,
+            validityFrom: formData.validityFrom, validityTo: formData.validityTo,
+            bookingFrom: formData.bookingFrom, bookingTo: formData.bookingTo,
+            sunday: formData.sunday, monday: formData.monday, tuesday: formData.tuesday,
+            wednesday: formData.wednesday, thursday: formData.thursday,
+            friday: formData.friday, saturday: formData.saturday,
+            bookingType: formData.bookingType, ranking: formData.ranking,
+            recommended: formData.recommended, deals: formData.deals, freesell: formData.freesell,
+            shortDesc: formData.shortDesc, longDesc: formData.longDesc,
           });
+          if (!atLeastOneDay(formData)) {
+            toast.error('At least one valid day is required', { position: 'top-right', autoClose: 3000 });
+            return false;
+          }
           break;
-        case 3:
-          step4Schema.parse({
-            thumbnailImage: formData.thumbnailImage,
-            bigImage: formData.bigImage,
-            imageTag: formData.imageTag,
-            imageAttribute: formData.imageAttribute,
-            imageFor: formData.imageFor,
-          });
-          break;
-        case 4:
-          step5Schema.parse({
-            itineraryDays: formData.itineraryDays,
-            inclusions: formData.inclusions,
-            exclusions: formData.exclusions,
-          });
-          break;
-        case 5:
-          step6Schema.parse({
-            destinations: formData.destinations,
-          });
-          break;
-        case 6:
-          step7Schema.parse({
-            hotels: formData.hotels,
-          });
-          break;
-        case 7:
-          step8Schema.parse({
-            costing: formData.costing,
-          });
-          break;
-        case 8:
-          step9Schema.parse({
-            cancellationRules: formData.cancellationRules,
-          });
-          break;
+        case 1: step4Schema.parse({ imageAttribute: formData.imageAttribute, imageFor: formData.imageFor, imageTag: formData.imageTag }); break;
+        case 2: step5Schema.parse({ itineraryDays: formData.itineraryDays, inclusions: formData.inclusions, exclusions: formData.exclusions }); break;
+        case 3: step6Schema.parse({ destinations: formData.destinations }); break;
+        case 4: step7Schema.parse({ hotels: formData.hotels }); break;
+        case 5: step8Schema.parse({ costing: formData.costing }); break;
+        case 6: step9Schema.parse({ cancellationRules: formData.cancellationRules }); break;
       }
-      setMessage(null);
       return true;
-    } catch (error: any) {
-      if (error.errors && error.errors.length > 0) {
-        const errorMessages = error.errors.map((err: any) => err.message).join(', ');
-        setMessage({ type: 'error', text: errorMessages });
-      } else {
-        setMessage({ type: 'error', text: 'Please fill all required fields correctly' });
-      }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: any) {
+      toast.error(
+        err.errors?.length
+          ? err.errors.map((e: any) => e.message).join(', ')
+          : 'Please fill all required fields correctly',
+        { position: 'top-right', autoClose: 3000 },
+      );
       return false;
     }
   };
 
-  const handleNext = () => {
-    if (validateCurrentStep()) {
-      setActiveStep((prev) => prev + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
+  // ── Submit — savePackage receives formData directly, zero mapping ──────────
 
-  const handleBack = () => {
-    setActiveStep((prev) => prev - 1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleSaveDraft = async () => {
+  const handleCreatePackage = async () => {
+    if (!validateCurrentTab()) return;
     setIsLoading(true);
     try {
-      //localStorage.setItem('packageDraft', JSON.stringify(formData));
-      localStorage.clear();
-      setMessage({ type: 'success', text: 'Draft saved successfully' });
-    } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Failed to save draft' });
+      const res   = await packageService.savePackage(formData, 0);
+      const newId = res.referenceId;
+      setPackageId(newId);
+      setIsEditMode(true);
+      toast.success('Package created successfully!', { position: 'top-right', autoClose: 3000 });
+      if (newId) navigate(`/package/edit/${newId}`);
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to create package', { position: 'top-right', autoClose: 3000 });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = async () => {
-    if (!validateCurrentStep()) return;
-
+  const handleSaveChanges = async () => {
+    if (!validateCurrentTab()) return;
     setIsLoading(true);
     try {
-      await packageService.createPackage(formData as CreatePackageRequest);
-      setMessage({ type: 'success', text: 'Package created successfully!' });
-      localStorage.removeItem('packageDraft');
-      setTimeout(() => navigate('/package/package-list'), 2000);
-    } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Failed to create package' });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      await packageService.savePackage(formData, packageId ?? 0);
+      toast.success('Package saved successfully!', { position: 'top-right', autoClose: 3000 });
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to save package', { position: 'top-right', autoClose: 3000 });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderStepContent = () => {
-    const commonProps = {
-      formData,
-      updateFormData,
-    };
+  // ── Tab renderer ──────────────────────────────────────────────────────────
 
-    switch (activeStep) {
-      case 0:
-        return (
-          <Step1SelectRegion
-            {...commonProps}
-            onValidationChange={(isValid) => handleStepValidationChange(0, isValid)}
-          />
-        );
-      case 1:
-        return (
-          <Step2PackageDetails
-            {...commonProps}
-            onValidationChange={(isValid) => handleStepValidationChange(1, isValid)}
-          />
-        );
-      case 2:
-        return (
-          <Step3PackageValidity
-            {...commonProps}
-            onValidationChange={(isValid) => handleStepValidationChange(2, isValid)}
-          />
-        );
-      case 3:
-        return (
-          <Step4UploadImages
-            {...commonProps}
-            onValidationChange={(isValid) => handleStepValidationChange(3, isValid)}
-          />
-        );
-      case 4:
-        return (
-          <Step5ItineraryManage
-            {...commonProps}
-            onValidationChange={(isValid) => handleStepValidationChange(4, isValid)}
-          />
-        );
-      case 5:
-        return (
-          <Step6DestinationDetails
-            {...commonProps}
-            onValidationChange={(isValid) => handleStepValidationChange(5, isValid)}
-          />
-        );
-      case 6:
-        return (
-          <Step7HotelMapping
-            {...commonProps}
-            onValidationChange={(isValid) => handleStepValidationChange(6, isValid)}
-          />
-        );
-      case 7:
-        return (
-          <Step8PackageCosting
-            {...commonProps}
-            onValidationChange={(isValid) => handleStepValidationChange(7, isValid)}
-          />
-        );
-      case 8:
-        return (
-          <Step9CancellationRules
-            {...commonProps}
-            onValidationChange={(isValid) => handleStepValidationChange(8, isValid)}
-          />
-        );
-      default:
-        return null;
+  const renderTabContent = () => {
+    if (!editReady || isLoading || dropdownsLoading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+          <CircularProgress size={32} />
+        </Box>
+      );
+    }
+
+    const common = { formData, updateFormData };
+    switch (activeTab) {
+      case 0: return (
+        <StepPackageDetail
+          {...common}
+          isEditMode={isEditMode}
+          loading={dropdownsLoading}
+          regions={dropdowns.regions}
+          countries={dropdowns.countries}
+          holidayCategories={dropdowns.holidayCategories}
+          holidayTypes={dropdowns.holidayTypes}
+          languages={dropdowns.languages}
+          markets={dropdowns.markets}
+          cities={dropdowns.cities}
+          suppliers={dropdowns.suppliers}
+          packageComponents={dropdowns.packageComponents}
+          onValidationChange={setPackageDetailValid}
+          onDirtyChange={setPackageDetailDirty}
+        />
+      );
+      case 1: return <Step4UploadImages packageId={packageId || 0} {...common} />;
+      case 2: return <Step5ItineraryManage {...common} />;
+      case 3: return <Step6DestinationDetails {...common} />;
+      case 4: return <Step7HotelMapping {...common} />;
+      case 5: return <Step8PackageCosting {...common} />;
+      case 6: return <Step9CancellationRules {...common} />;
+      default: return null;
     }
   };
 
-  const completedSteps = stepValidations.filter(Boolean).length;
-  const progressPercentage = (completedSteps / steps.length) * 100;
+  const isCreateTab = !isEditMode && activeTab === 0 && !packageId;
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <Box className={styles.container}>
-      <Paper className={styles.paper}>
+      <Paper className={styles.paper} elevation={0}>       
         <Box className={styles.header}>
-          <Box>
-            <Typography variant="h5" className={styles.title}>
-              Create New Package
-            </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5 }}>
-              Step {activeStep + 1} of {steps.length}
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
-            startIcon={<Save />}
-            onClick={handleSaveDraft}
-            disabled={isLoading}
-            size="small"
-          >
-            Save Draft
-          </Button>
+          <Typography className={styles.title} variant="h5">
+            {isEditMode ? 'Update Package' : 'Create New Package'}
+          </Typography>
+          {activeTab === 0 && (
+            <Box className={styles.actions}>
+              <Button
+                variant="contained"
+                onClick={isCreateTab ? handleCreatePackage : handleSaveChanges}
+                disabled={
+                  isLoading || !editReady || !packageDetailValid || !packageDetailDirty
+                }
+                size="large"
+                startIcon={<CheckCircle />}
+                sx={{ minWidth: 160, borderRadius: 2, fontWeight: 600 }}
+              >
+                {isCreateTab
+                  ? (isLoading ? 'Creating...' : 'Create Package')
+                  : (isLoading ? 'Saving...'   : 'Save Changes')}
+              </Button>
+            </Box>
+          )}
         </Box>
 
-        {/* <Box sx={{ mb: 2 }}>
-          <LinearProgress variant="determinate" value={progressPercentage} sx={{ height: 8, borderRadius: 4 }} />
-          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, display: 'block' }}>
-            {completedSteps} of {steps.length} steps completed
-          </Typography>
-        </Box> */}
-
-        <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
-          {steps.map((label, index) => (
-            <Step key={label} completed={stepValidations[index]}>
-              <StepLabel
-                StepIconProps={{
-                  icon: stepValidations[index] ? <CheckCircle /> : index + 1,
+        <Box className={styles.tabsRow}>
+          {TABS.map((label, i) => {
+            const disabled = !isEditMode && !packageId && i > 0;
+            const active   = activeTab === i;
+            return (
+              <Button key={label}
+                onClick={() => { if (!disabled) setActiveTab(i); }}
+                disabled={disabled}
+                disableRipple={disabled}
+                sx={{
+                  fontWeight:   active ? 700 : 400,
+                  color:        active ? '#1976d2' : '#6b7280',
+                  borderBottom: active ? '2px solid #1976d2' : '2px solid transparent',
+                  borderRadius: 0, minWidth: 'max-content', px: 2, py: 1.25, fontSize: 14,
+                  opacity: disabled ? 0.45 : 1, transition: 'all 0.15s ease',
+                  '&:hover:not(:disabled)': { color: '#1976d2', background: 'rgba(25,118,210,0.04)' },
                 }}
               >
                 {label}
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+              </Button>
+            );
+          })}
+        </Box>
 
-        {message && (
-          <Alert severity={message.type} sx={{ mb: 3 }} onClose={() => setMessage(null)}>
-            {message.text}
-          </Alert>
+        {(isLoading || dropdownsLoading) && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 120 }}>
+            <CircularProgress size={32} />
+          </Box>
         )}
 
-        {isLoading && <LinearProgress sx={{ mb: 2 }} />}
-
-        <Box className={styles.stepContent}>{renderStepContent()}</Box>
-
-        <Box className={styles.actions}>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBack />}
-            onClick={handleBack}
-            disabled={activeStep === 0 || isLoading}
-          >
-            Back
-          </Button>
-
-          {activeStep === steps.length - 1 ? (
-            <Button
-              variant="contained"
-              onClick={handleSubmit}
-              disabled={isLoading}
-              size="large"
-              startIcon={<CheckCircle />}
-            >
-              {isLoading ? 'Creating Package...' : 'Create Package'}
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              endIcon={<ArrowForward />}
-              onClick={handleNext}
-              disabled={isLoading}
-            >
-              Next
-            </Button>
-          )}
+        <Box className={styles.scrollBody}>
+          <ToastContainer position="top-right" autoClose={3000} newestOnTop
+            closeOnClick pauseOnFocusLoss draggable pauseOnHover />
+           <Box className={styles.stepContent}>
+            {renderTabContent()}
+          </Box>
         </Box>
+
       </Paper>
     </Box>
   );

@@ -36,7 +36,7 @@ import type { CreatePackageRequest } from '@/services/package/package.models';
 interface Step5Props {
   formData: Partial<CreatePackageRequest>;
   updateFormData: (data: Partial<CreatePackageRequest>) => void;
-  onValidationChange: (isValid: boolean) => void;
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 const itineraryDaySchema = z.object({
@@ -86,7 +86,7 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   useEffect(() => {
     const isValid = itineraryDays.length > 0;
     updateFormData({ itineraryDays, inclusions, exclusions });
-    onValidationChange(isValid);
+    onValidationChange?.(isValid);
   }, [itineraryDays, inclusions, exclusions]);
 
   const onSubmitDay = (data: ItineraryDayFormData) => {
@@ -147,27 +147,29 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {itineraryDays.map((day: any, index) => (
-                      <TableRow key={day.id} hover sx={{ '&:last-child td': { border: 0 } }}>
-                        <TableCell>
-                          <Chip label={`Day ${day.day}`} size="small" color="primary" variant="outlined" sx={{ fontSize: '0.75rem' }} />
-                        </TableCell>
-                        <TableCell sx={{ fontSize: '0.8125rem' }}>
-                          {cities.find((c) => c.id === day.cityId)?.name || '--'}
-                        </TableCell>
-                        <TableCell sx={{ fontSize: '0.8125rem', color: '#374151' }}>
-                          {day.briefDescription}
-                        </TableCell>
-                        <TableCell sx={{ textAlign: 'center' }}>
-                          <IconButton size="small" color="primary" onClick={() => handleEdit(day)} sx={{ mr: 0.5 }}>
-                            <EditIcon sx={{ fontSize: 16 }} />
-                          </IconButton>
-                          <IconButton size="small" color="error" onClick={() => handleDelete(day.id)}>
-                            <DeleteIcon sx={{ fontSize: 16 }} />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {itineraryDays.map((day: any) => {
+                      return (
+                        <TableRow key={day.id}>
+                          <TableCell>
+                            <Chip label={`Day ${day.day}`} size="small" color="primary" variant="outlined" sx={{ fontSize: '0.75rem' }} />
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.8125rem' }}>
+                            {cities.find((c) => c.id === day.cityId)?.name || '--'}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.8125rem', color: '#374151' }}>
+                            {day.briefDescription}
+                          </TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>
+                            <IconButton size="small" color="primary" onClick={() => handleEdit(day)} sx={{ mr: 0.5 }}>
+                              <EditIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                            <IconButton size="small" color="error" onClick={() => handleDelete(day.id)}>
+                              <DeleteIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </TableContainer>

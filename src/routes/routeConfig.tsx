@@ -54,6 +54,7 @@ export const routes: RouteObject[] = [
       {
         element: <AuthLayout />,
         children: [
+          { index: true, element: <Navigate to="/login" replace /> },
           { path: 'login', element: <Login /> },
           { path: 'welcome', element: <Welcome /> },
           { path: 'plain', element: <Plain /> },
@@ -68,6 +69,7 @@ export const routes: RouteObject[] = [
       {
         element: <DashboardLayout />,
         children: [
+          { index: true, element: <Navigate to="/dashboard" replace /> },
           { path: 'dashboard', element: <Dashboard /> },
           { path: 'choose-hotel', element: <ChooseHotel /> },
         ],
@@ -147,6 +149,7 @@ export const routes: RouteObject[] = [
               { path: 'package-list', element: <PackageList /> },
               { path: 'welcome', element: <PackageWelcome /> },
               { path: 'create-package-wizard', element: <CreatePackageWizard /> },
+              { path: 'edit/:id', element: <CreatePackageWizard /> },
               { path: 'create-package', element: <CreatePackage /> },
               { path: 'holiday-category-type-mapping', element: <HolidayCategoryTypeMapping /> },
               { path: 'tabs-type', element: <TabsType /> },
@@ -168,10 +171,9 @@ export const routes: RouteObject[] = [
           },
         ],
       },
-      { index: true, element: <Dashboard /> },
     ],
   },
-  { path: '*', element: <div>404 - Page Not Found</div> },
+  { path: '*', element: <Navigate to="/login" replace /> },
 ];
 
 export default routes;

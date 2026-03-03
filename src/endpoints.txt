@@ -1,0 +1,447 @@
+Extranet Api
+
+Core URL : https://extranetapi.travelportal24.com/api/
+Endpoints:-
+Login :{auth/login}
+Module List : {Common/ModuleList}
+Region List :{Common/RegionList}
+Language List : {Common/LanguageList}
+Country By Region List: {Common/CountryByRegionList}
+HolidayCategory List : {Common/HolidayCategoryList}
+Package List : {Package/PackageList}
+UpdateStatus And Feature/Tags :{UpdateStatusAndTags}
+HolidayType List  {Package/HolidayTypeList}
+DepartureCities List : {Package/DepartureCitiesList}
+PackageSuppliersList : {Package/PackageSuppliersList}
+MarketList:  {Common/MarketList}
+Package Cities : {Package/PackageCities}
+Create And UpdatePackage: {Package/CreateAndUpdatePackage}
+Package Details: {Package/PackageDetails}
+Get Package Images :{Package/GetPackageImages}
+Change Image Feature :{Package/ChangeImageFeature}
+
+Login Endpoint : {auth/login}
+https://extranetapi.travelportal24.com/api/auth/login
+PayLoad Request
+{
+  "userId": "admin", // Mandatory
+  "password": "sriadmin", //Mandatory
+  "companyCode": "SMT" //Mandatory
+}
+ 
+Payload Response   : Status section is common
+{
+    "status": {
+        "statusCode": 200,
+        "success": true,
+        "messageCode": "A0001",
+        "messageText": "Request processed successfully"
+    },
+    "data": {
+        "userId": "admin",
+        "firstName": "SMT",
+        "lastName": "Admin",
+        "companyName": "SourceMyTrip",
+        "emailId": "test@tst.com00",
+        "userTypeCode": "Admin",
+        "userType": "Admin",
+        "userRole": "1",
+        "tempPassword": false
+    }
+}
+Module List :- {Common/ModuleList}
+This endpoint will use on after login dashboard page, used for display available modules on basis of role 
+Request Payload
+{
+  "userRole": 1, // Pick from login response
+  "companyCode": "SMT"
+}
+
+Respose
+        {
+            "moduleId": 73,
+            "moduleCode": "Market", // this will use for internal section menu request
+            "moduleName": "Manage Market", // this will be display 
+            "moduleDesc": "Manage Market",
+            "moduleImage": "marketing.png" // these images will available in folder, image will be stored within companycode folder
+        },
+
+Menu List :-  {Common/MenuList}
+This endpoint will use for menu binding after dashboard page redirection, work on basis of role
+
+Request Payload
+{
+  "userRole": 1,
+  "moduleCode": "Hotel",// Optional pass according to module 
+  "companyCode": "SMT"
+}
+
+Response
+         {
+            "menuId": 6,
+            "menuCode": “AddHotelFacility”,
+            "menuModule": "HOTEL",
+            "menuName": "Add Hotel Facility",
+            "menuDesc": "Hotel Facility Master"
+        }
+Region List : {Common/RegionList}
+This endpoint use for region list binding in dropdown, used in package search and package creation
+
+Request Payload
+{
+"companyCode": "SMT",
+"status": 1  – pass 1 in case of dropdown and 0 in case of grid binding
+}
+
+Response
+               {
+                "regionId": 1,
+                "regionName": "Kurdistan",
+   "status": "Active"  – this property will hide from api side when we pass 1 from request payload.
+
+}
+Country by region : { Common/CountryByRegionList} – This endpoint use for country  list binding in dropdown, used in package search and package creation
+Request Payload
+{
+  "regionId": 3,
+  "companyCode": "SMT"
+}
+Response
+{
+            "countryCode": "IN",
+            "countryName": "India"
+}
+HolidayCategoryList : { Common/HolidayCategoryList}
+Use for holiday category dropdown binding on package creation.
+Request Payload 
+
+{ 
+  "companyCode": "SMT",
+"status": 1   — pass 1 in case of dropdown binding and pass 0 in case of grid binding
+}
+
+Response
+{
+          "categoryId": 1, – hide in case of request status 1 , use in grid binding
+     "categoryCode": "WLS",
+     "categoryName": "Wild Life",
+     "status": "Active"– hide in case of request status 1 , use in grid binding
+}
+
+Package List : { Package/PackageList}
+This endpoint use for package grid binding
+Request Payload
+{
+  "regionId": 0,     // optional-  dropdown selected value
+  "countryIds": "", // optional-  multiple country Id can pass with comma separated
+  "holidayCategoryCode": "", // optional-  dropdown selected value
+  "validityFrom": "", // optional but default on page load set current date-1
+  "validityTo": "",// optional but default on page load set current date+1 year
+  "packageName": "", // optional
+  "companyCode": "SMT",// mandatory
+  "status": "" //Optional dropdown value should be 0- Inactive, 1-Active
+}
+
+Response as like earlier
+{
+            "packageId": 1,
+            "holidayType": "Wild Life", // new property
+            "priceStatus": "Complete",
+            "regionId": 1,
+            "countryId": "IQ",
+            "packageCode": "PK000000",
+            "packageName": "test Package",
+            "days": 3,
+            "validityFrom": "13 Aug 2022",
+            "validityTo": "19 Aug 2026",
+            "status": "Active", // changes bool to string
+            "deals": false,
+            "recommended": false,
+            "menu": false,
+            "freeSell": true
+}
+
+Update Package Status and feature : { Package/UpdateStatusAndTags }
+This endpoint used for update package featured like status, deals, recommended,menu. Respective process apply when we looking to update any feature from package List.
+
+Payload Request
+{
+  "packageId": 1, //Mandatory
+  "userId": 2, //Mandatory
+  "companyCode": "SMT", //Mandatory
+  "status": true,
+  "deals": true,
+  "recommended": false,
+  "menu": true
+}
+
+Payload Response
+{
+    "status": {
+        "statusCode": 200, 
+        "success": true, // if value is true then success otherwise failed
+        "messageCode": "A0001",
+        "messageText": "Request processed successfully"
+    }
+}
+
+Language List{ Common/LanguageList} : this payload used for language binding, used on package creation and others
+Request Payload
+{
+  "companyCode": "SMT"
+}
+
+Response Payload
+{
+            "languageCode": "GB",
+            "languageName": "English"
+ }
+
+
+Holiday Category : { Common/HolidayCategoryList} : this payload used for Holiday category binding, used on package creation and others
+
+
+Request Payload
+{ 
+  "companyCode": "SMT"
+}
+
+Response Payload
+{
+            "categoryCode": "WLS",
+            "categoryName": "Wild Life"
+}
+
+Package Holiday Type List : { Package/ HolidayTypeList} :- this payload used for Holiday Type binding, used on package creation and others
+     Payload Request
+{
+  "holidayCategoryCode": "ADV",
+  "companyCode": "SMT"
+}
+Payload Response
+         {
+            "holidayTypeID": 4,
+            "holidayTypeCode": "007",
+            "holidayTypeName": "Adventures Trip"
+        }
+
+Departure City List { Package/DepartureCitiesList} this payload used for Departure city binding, used on package creation and others
+
+Request Payload
+{
+  "companyCode": "SMT"
+}
+
+Response Payload
+{
+            "cityCode": "DEL",
+            "countryCode": "IN",
+            "cName": "Delhi",
+            "cityName": "Delhi(India)",  // used for drop down binding
+            "cityId": "DEL", // used for dropdown binding
+            "isMaster": false
+}
+
+Supplier Name : {Package/PackageSuppliersList } this payload used for Package Supplier binding, used on package creation page.
+  Request Payload
+{ 
+  "companyCode": "SMT"
+}
+
+Response Payload
+{
+            "supplierId": 1,
+            "supplierName": "Sri Nego(NSRI)"
+        }
+
+Market List : {Common/MarketList } this endpoint used on create/update package and other sections
+  Request Payload
+{ 
+  "companyCode": "SMT"
+}
+
+Response Payload
+{
+      "marketId": 1,
+      "marketName": "Indian Market"
+}
+
+Package Destination /Cities List : {Package/PackageCities} this endpoint used on create/update package
+ Request Payload
+{
+  "countryCodes": "IN,UK",
+  "companyCode": "SMT"
+}
+
+
+Response Payload
+{
+  "cityCode": "GAY",
+  "cityName": "Gaya"
+}
+
+
+Package Create /Update : {Package/CreateAndUpdatePackage} this endpoint used on create/update package
+ Request Payload
+{
+  "categoryId": "1",
+  "holidayType": "1",
+  "packageCode": "1111",
+  "departCityList": "11",
+  "packageName": "SANT TEST1",
+  "supplierId": "0",
+  "offerType": "0",
+  "offerDesc": "TEST",
+  "tourType": "TEST",
+  "marketType": "TEST",
+  "days": 2,
+  "validityFrom": "2026-02-09",
+  "validityTo": "2026-10-09",
+  "bookingFrom": "2026-02-09",
+  "bookingTo": "2026-10-09",
+  "sunday": true,
+  "monday": true,
+  "tuesday": true,
+  "wednesday": true,
+  "thursday": true,
+  "friday": true,
+  "saturday": true,
+  "componentType": "TEST",
+  "regionId": 1,
+  "countryIds": "in",
+  "cityId": "TEST",
+  "agentCommision": 0,
+  "commisionTypeInPercent": true,
+  "recommended": true,
+  "deals": true,
+  "menu": true,
+  "freesell": true,
+  "remarks": "string",
+  "status": 0,
+  "actionType": "UPDATE",// INSERT/UPDATE
+  "bookingType": "est",
+  "ranking": 0,
+  "userId": 0,
+  "companyCode": "SRI",
+  "pkgId": 17, // pass 0 in case of insert and exact id in case of update.
+  "shortDesc": "test",
+  "longDesc": "test",
+  "languageCode": ""
+}
+
+
+
+
+Response Payload :  if any exception occurs then data property will not be available and indicated in status property.
+{
+    "status": {
+        "statusCode": 200,
+        "success": true,
+        "messageCode": "A0001",
+        "messageText": ""
+    },
+    "data": {
+        "referenceId": 17 // created/updated package Id, this value is used for further reference
+    }
+}
+
+Package Details : {Package/PackageDetails} this endpoint used for get package details
+ Request Payload
+{
+  "packageId": 1,
+  "companyCode": "SMT"
+}
+Response Payload
+"data": {
+        "packageId": 1,
+        "categoryId": "WLS",
+        "packageCode": "PK000000",
+        "packageName": "test Package",
+        "recommended": false,
+        "deals": false,
+        "menu": false,
+        "supplierCode": "7",
+        "email": "santosh011@gmail.com",
+        "supplierId": null,
+        "offerType": "0",
+        "offerDesc": "",
+        "packageType": "ADV,DOM,VAC",
+        "marketType": "",
+        "days": 3,
+        "validityFrom": "13 Aug 2022",
+        "validityTo": "19 Aug 2026",
+        "bookingFrom": "13 Aug 2022",
+        "bookingTo": "11 May 2025",
+        "currency": null,
+        "sunday": true,
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true,
+        "componentType": "4",
+        "regionId": 1,
+        "countryId": "IQ",
+        "cityId": "BGW,ISU",
+        "agentCommision": 0.00,
+        "commisionTypeInPercent": false,
+        "remarks": "",
+        "bookingType": "1",
+        "status": true,
+        "shortDesc": "Visit the beautiful cascading snow-white terraced cliffs of Pamukkale.",
+        "longDesc": "Visit the beautiful cascading snow-white terraced cliffs of Pamukkale.<div>Visit the beautiful cascading snow-white terraced cliffs of Pamukkale.</div><div>Visit the beautiful cascading snow-white terraced cliffs of Pamukkale.</div><div>Visit the beautiful cascading snow-white terraced cliffs of Pamukkale.</div><div><br /></div>",
+        "languageCode": "GB",
+        "tourType": "FIT",
+        "ranking": 0,
+        "freesell": true,
+        "channel": "B2B,B2C",
+        "bookBeforeDays": 2
+    }
+
+
+Get Package Images : {Package/GetPackageImages} this endpoint used for get package images
+ Request Payload
+{
+  "packageId": 2,
+  "companyCode": "SMT"
+}
+Response Payload
+{
+   "imageId": 26,
+   "packageId": 2,
+   "thumbnail": "www.xyx.com/images/west-02HBQ2w_yak-unsplash_09_21_24_922.jpg",
+   "bigImage": "www.xyx.com/images/west-02HBQ2w_yak-unsplash_09_21_24_922.jpg",
+   "imageTag": "hotel image",
+   "imageType": "PKG",
+   "isMasterImage": false,
+   "status": true
+ }
+
+Change  Package Images Feature : {Package/ChangeImageFeature} this endpoint used for change images feature
+ Request Payload
+{
+  "packageId": 2,
+  "imageId": 26,
+  "userId": 2,
+  "companyCode": "SMT",
+  "actionType": "ChageStatus" //ChageStatus/SetAsDefault/DELETE
+}
+
+
+
+
+
+
+Response Payload
+{
+    "status": {
+        "statusCode": 200,// if statusCode is 200 then success else failed
+        "success": true,// if status is true then success else failed
+        "messageCode": "A0001",
+        "messageText": "Request processed successfully"
+    }
+}
+
+
+

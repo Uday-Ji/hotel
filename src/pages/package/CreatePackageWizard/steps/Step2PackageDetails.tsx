@@ -1,548 +1,359 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Grid,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  Box,
-  OutlinedInput,
-  FormControlLabel,
-  Checkbox,
-  Divider,
-  FormHelperText,
-  Paper,
-  CircularProgress,
-  Alert,
-} from '@mui/material';
-import { Description as DescriptionIcon } from '@mui/icons-material';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { packageService } from '@/services/package/package.service';
-import { regionService } from '@/services/common/region.service';
-import type { CreatePackageRequest } from '@/services/package/package.models';
-import type { HolidayCategory } from '@/services/package/package.models';
+// import React, { useEffect } from 'react';
+// import {
+//   Grid, TextField, FormControl, InputLabel, Select, MenuItem,
+//   Card, CardContent, Typography, Chip, Box, OutlinedInput,
+//   FormControlLabel, Checkbox, Divider, FormHelperText, Paper, CircularProgress,
+// } from '@mui/material';
+// import { Description as DescriptionIcon } from '@mui/icons-material';
+// import { useForm, Controller } from 'react-hook-form';
+// import { zodResolver } from '@hookform/resolvers/zod';
+// import { z } from 'zod';
+// import { step2Schema } from '../schemas/validationSchemas';
+// import type { PackageFormData, HolidayCategory, HolidayType, Language, City, PackageSupplier } from '@/services/package/package.models';
 
-interface Step2Props {
-  formData: Partial<CreatePackageRequest>;
-  updateFormData: (data: Partial<CreatePackageRequest>) => void;
-  onValidationChange: (isValid: boolean) => void;
-}
+// // ── Prop types ────────────────────────────────────────────────────────────────
 
-const step2Schema = z.object({
-  languageCode: z.string().min(1, 'Language is required'),
-  holidayCategoryCode: z.string().min(1, 'Holiday category is required'),
-  holidayTypeIds: z.array(z.number()).min(1, 'At least one holiday type is required'),
-  packageName: z.string().min(3, 'Package name must be at least 3 characters'),
-  departureCityIds: z.array(z.number()).min(1, 'At least one departure city is required'),
-  packageCode: z.string().min(1, 'Package code is required'),
-  packageComponents: z.array(z.string()).min(1, 'At least one component is required'),
-  destinationCityIds: z.array(z.number()).min(1, 'At least one destination is required'),
-  supplierName: z.string().optional(),
-  remarks: z.string().optional(),
-  isActive: z.boolean(),
-});
+// interface ComponentOption { id: number; name: string; }
 
-type Step2FormData = z.infer<typeof step2Schema>;
+// interface Step2Props {
+//   formData:         Partial<PackageFormData>;
+//   updateFormData:   (data: Partial<PackageFormData>) => void;
+//   onValidationChange?: (isValid: boolean) => void;
+//   // dropdowns — all owned and fetched by the wizard
+//   holidayCategories: HolidayCategory[];
+//   holidayTypes:      HolidayType[];
+//   languages:         Language[];
+//   cities:            City[];          // same list for departure + destination
+//   suppliers:         PackageSupplier[];
+//   packageComponents: ComponentOption[];
+//   loadingDropdowns?: boolean;
+// }
 
-const Step2PackageDetails: React.FC<Step2Props> = ({ formData, updateFormData, onValidationChange }) => {
-  const [holidayCategories, setHolidayCategories] = useState<HolidayCategory[]>([]);
-  const [holidayTypes, setHolidayTypes] = useState<any[]>([]);
-  const [departureCities, setDepartureCities] = useState<any[]>([]);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
-  const [packageComponents, setPackageComponents] = useState<any[]>([]);
-  const [destinationCities, setDestinationCities] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [languages, setLanguages] = useState<any[]>([]);
+// type Step2FormData = z.infer<typeof step2Schema>;
 
-  const {
-    control,
-    watch,
-    setValue,
-    formState: { errors, isValid },
-  } = useForm<Step2FormData>({
-    resolver: zodResolver(step2Schema),
-    mode: 'onChange',
-    defaultValues: {
-      languageCode: formData.languageCode || '',
-      holidayCategoryCode: formData.holidayCategoryCode || '',
-      holidayTypeIds: [],
-      packageName: formData.packageName || '',
-      departureCityIds: [],
-      packageCode: formData.packageCode || '',
-      packageComponents: [],
-      destinationCityIds: [],
-      supplierName: formData.supplierName || '',
-      remarks: formData.remarks || '',
-      isActive: formData.isActive ?? true,
-    },
-  });
+// const sx = { '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#fff' } };
 
-  const watchedValues = watch();
-  const selectedHolidayCategoryCode = watch('holidayCategoryCode');
+// // ── Helpers: CSV ↔ array ──────────────────────────────────────────────────────
 
-  // Fetch dropdown data on mount
-  useEffect(() => {
-    fetchDropdownData();
-  }, []);
+// const toArr   = (csv: string | undefined): string[]  => csv ? csv.split(',').filter(Boolean) : [];
+// const toCsv   = (arr: string[]): string => arr.join(',');
 
-  // Update form data when values change
-  useEffect(() => {
-    updateFormData(watchedValues);
-  }, [watchedValues, updateFormData]);
+// // ── Component ─────────────────────────────────────────────────────────────────
 
-  // Update validation state when form validity changes
-  useEffect(() => {
-    onValidationChange(isValid);
-  }, [isValid, onValidationChange]);
+// const Step2PackageDetails: React.FC<Step2Props> = ({
+//   formData,
+//   updateFormData,
+//   onValidationChange = () => {},
+//   holidayCategories,
+//   holidayTypes,
+//   languages,
+//   cities,
+//   suppliers,
+//   packageComponents,
+//   loadingDropdowns = false,
+// }) => {
+//   const {
+//     control,
+//     watch,
+//     reset,
+//     formState: { errors, isValid },
+//   } = useForm<Step2FormData>({
+//     resolver: zodResolver(step2Schema),
+//     mode: 'onChange',
+//     defaultValues: {
+//       categoryId:     formData.categoryId     ?? '',
+//       holidayType:    formData.holidayType    ?? '',
+//       packageName:    formData.packageName    ?? '',
+//       packageCode:    formData.packageCode    ?? '',
+//       departCityList: formData.departCityList ?? '',
+//       componentType:  formData.componentType  ?? '',
+//       cityId:         formData.cityId         ?? '',
+//       languageCode:   formData.languageCode   ?? '',
+//       supplierId:     formData.supplierId     ?? '0',
+//       remarks:        formData.remarks        ?? '',
+//       status:         formData.status         ?? 1,
+//     },
+//   });
 
-  // Fetch holiday types when category changes
-  useEffect(() => {
-    if (selectedHolidayCategoryCode) {
-      packageService.getHolidayTypeList(selectedHolidayCategoryCode).then((data) => {
-        const types = data.map((type: any) => ({
-          id: Number(type.holidayTypeID || type.id),
-          name: String(type.holidayTypeName || type.name),
-        }));
-        setHolidayTypes(types);
-      }).catch(err => {
-        console.error('Error loading holiday types:', err);
-        setHolidayTypes([]);
-      });
-      setValue('holidayTypeIds', []);
-    } else {
-      setHolidayTypes([]);
-      setValue('holidayTypeIds', []);
-    }
-  }, [selectedHolidayCategoryCode, setValue]);
+//   const watchedValues = watch();
+//   const selectedCategory = watch('categoryId');
 
-  const fetchDropdownData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [categoriesData, citiesData, suppliersData, languagesData] = await Promise.all([
-        regionService.getHolidayCategoryList('SMT'),
-        packageService.getCitiesList(),
-        packageService.PackageSuppliersList(),
-        packageService.getLanguageList(),
-      ]);
+//   // Re-populate when edit-mode data arrives (sentinel: packageCode)
+//   useEffect(() => {
+//     reset({
+//       categoryId:     formData.categoryId     ?? '',
+//       holidayType:    formData.holidayType    ?? '',
+//       packageName:    formData.packageName    ?? '',
+//       packageCode:    formData.packageCode    ?? '',
+//       departCityList: formData.departCityList ?? '',
+//       componentType:  formData.componentType  ?? '',
+//       cityId:         formData.cityId         ?? '',
+//       languageCode:   formData.languageCode   ?? '',
+//       supplierId:     formData.supplierId     ?? '0',
+//       remarks:        formData.remarks        ?? '',
+//       status:         formData.status         ?? 1,
+//     });
+//   // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [formData.packageCode]);
 
-      setHolidayCategories(categoriesData);
-      setLanguages(languagesData);
+//   // Sync up to wizard
+//   useEffect(() => {
+//     updateFormData(watchedValues);
+//   // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [JSON.stringify(watchedValues)]);
 
-      // Process cities - use INDEX as numeric id, store original cityId for submission
-      const processedCities = citiesData.map((city: any, index: number) => ({
-        id: index, // Use numeric index as id
-        cityId: String(city.cityId || city.cityCode), // Store original cityId for API
-        name: String(city.cityName || city.cName),
-      }));
+//   useEffect(() => { onValidationChange(isValid); }, [isValid, onValidationChange]);
 
-      setDepartureCities(processedCities);
-      setDestinationCities(processedCities);
+//   if (loadingDropdowns) {
+//     return (
+//       <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+//         <CircularProgress size={28} />
+//       </Box>
+//     );
+//   }
 
-      setSuppliers(
-        suppliersData.map((supplier: any, index: number) => ({
-          id: Number(supplier.supplierId || supplier.id || index),
-          name: String(supplier.supplierName || supplier.name || 'Unknown'),
-        }))
-      );
+//   return (
+//     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+//       <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
+//         <Card sx={{ boxShadow: 'none', border: '1px solid #e5e7eb' }}>
+//           <CardContent>
+//             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+//               <DescriptionIcon sx={{ mr: 1, color: '#f59e0b', fontSize: 28 }} />
+//               <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>Basic Information</Typography>
+//             </Box>
+//             <Divider sx={{ mb: 3 }} />
 
-      setPackageComponents([
-        { id: 1, name: 'Hotel' },
-        { id: 2, name: 'Meals' },
-        { id: 3, name: 'Tour Guide' },
-        { id: 4, name: 'Transport' },
-        { id: 5, name: 'Sightseeing' },
-      ]);
-    } catch (error) {
-      console.error('Failed to fetch dropdown data:', error);
-      setError('Failed to load form data. Please refresh the page.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+//             <Grid container spacing={2.5}>
 
-  const compactFieldSx = {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: 2,
-      backgroundColor: '#fff',
-    },
-  };
+//               {/* Language */}
+//               <Grid item xs={12} md={6}>
+//                 <Controller name="languageCode" control={control} render={({ field }) => (
+//                   <TextField {...field} select size="small" fullWidth label="Language *" sx={sx}
+//                     error={!!errors.languageCode} helperText={errors.languageCode?.message}>
+//                     <MenuItem value="">--Select Language--</MenuItem>
+//                     {languages.map((l) => (
+//                       <MenuItem key={l.languageCode} value={l.languageCode}>{l.languageName}</MenuItem>
+//                     ))}
+//                   </TextField>
+//                 )} />
+//               </Grid>
 
-  if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+//               {/* Holiday Category — stores categoryCode directly */}
+//               <Grid item xs={12} md={6}>
+//                 <Controller name="categoryId" control={control} render={({ field }) => (
+//                   <TextField {...field} select size="small" fullWidth label="Holiday Category *" sx={sx}
+//                     error={!!errors.categoryId} helperText={errors.categoryId?.message}>
+//                     <MenuItem value="">--Select Category--</MenuItem>
+//                     {holidayCategories.map((c) => (
+//                       <MenuItem key={c.categoryCode} value={c.categoryCode}>{c.categoryName}</MenuItem>
+//                     ))}
+//                   </TextField>
+//                 )} />
+//               </Grid>
 
-  return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
+//               {/* Holiday Type — stored as CSV of holidayTypeIDs */}
+//               <Grid item xs={12} md={6}>
+//                 <Controller name="holidayType" control={control} render={({ field }) => {
+//                   const selected = toArr(field.value);
+//                   return (
+//                     <FormControl fullWidth size="small" error={!!errors.holidayType} disabled={!selectedCategory}>
+//                       <InputLabel>Holiday Type *</InputLabel>
+//                       <Select
+//                         multiple
+//                         value={selected}
+//                         onChange={(e) => field.onChange(toCsv(e.target.value as string[]))}
+//                         input={<OutlinedInput label="Holiday Type *" />}
+//                         sx={sx}
+//                         renderValue={(sel) => (
+//                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+//                             {(sel as string[]).map((id) => {
+//                               const t = holidayTypes.find((h) => String(h.holidayTypeID) === id);
+//                               return t ? <Chip key={id} label={t.holidayTypeName} size="small" /> : null;
+//                             })}
+//                           </Box>
+//                         )}
+//                       >
+//                         {holidayTypes.length === 0
+//                           ? <MenuItem disabled>{selectedCategory ? 'No types available' : 'Select a category first'}</MenuItem>
+//                           : holidayTypes.map((t) => (
+//                             <MenuItem key={t.holidayTypeID} value={String(t.holidayTypeID)}>
+//                               <Checkbox checked={selected.includes(String(t.holidayTypeID))} size="small" />
+//                               {t.holidayTypeName}
+//                             </MenuItem>
+//                           ))
+//                         }
+//                       </Select>
+//                       {errors.holidayType && <FormHelperText>{errors.holidayType.message}</FormHelperText>}
+//                       {!selectedCategory && <FormHelperText>Please select a holiday category first</FormHelperText>}
+//                     </FormControl>
+//                   );
+//                 }} />
+//               </Grid>
 
-        <Card sx={{ mb: 3, boxShadow: 'none', border: '1px solid #e5e7eb' }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <DescriptionIcon sx={{ mr: 1, color: '#f59e0b', fontSize: 28 }} />
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                Basic Information
-              </Typography>
-            </Box>
-            <Divider sx={{ mb: 3 }} />
+//               {/* Package Name */}
+//               <Grid item xs={12} md={6}>
+//                 <Controller name="packageName" control={control} render={({ field }) => (
+//                   <TextField {...field} size="small" fullWidth label="Package Name *" sx={sx}
+//                     error={!!errors.packageName} helperText={errors.packageName?.message}
+//                     placeholder="Enter package name" />
+//                 )} />
+//               </Grid>
 
-            <Grid container spacing={2.5}>
-              {/* Language */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="languageCode"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      select
-                      size="small"
-                      fullWidth
-                      label="Language *"
-                      sx={compactFieldSx}
-                      error={!!errors.languageCode}
-                      helperText={errors.languageCode?.message}
-                    >
-                      <MenuItem value="">--Select Language--</MenuItem>
-                      {languages.map((lang) => (
-                        <MenuItem key={lang.languageCode} value={lang.languageCode}>
-                          {lang.languageName}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-              </Grid>
+//               {/* Departure Cities — stored as CSV of cityId strings */}
+//               <Grid item xs={12} md={6}>
+//                 <Controller name="departCityList" control={control} render={({ field }) => {
+//                   const selected = toArr(field.value);
+//                   return (
+//                     <FormControl fullWidth size="small" error={!!errors.departCityList}>
+//                       <InputLabel>Departure City *</InputLabel>
+//                       <Select
+//                         multiple
+//                         value={selected}
+//                         onChange={(e) => field.onChange(toCsv(e.target.value as string[]))}
+//                         input={<OutlinedInput label="Departure City *" />}
+//                         sx={sx}
+//                         renderValue={(sel) => (
+//                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+//                             {(sel as string[]).map((id) => {
+//                               const c = cities.find((ci) => ci.cityId === id);
+//                               return <Chip key={id} label={c?.cityName ?? id} size="small" />;
+//                             })}
+//                           </Box>
+//                         )}
+//                       >
+//                         {cities.map((c) => (
+//                           <MenuItem key={c.cityId} value={c.cityId}>
+//                             <Checkbox checked={selected.includes(c.cityId)} size="small" />
+//                             {c.cityName}
+//                           </MenuItem>
+//                         ))}
+//                       </Select>
+//                       {errors.departCityList && <FormHelperText>{errors.departCityList.message}</FormHelperText>}
+//                     </FormControl>
+//                   );
+//                 }} />
+//               </Grid>
 
-              {/* Holiday Category */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="holidayCategoryCode"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      select
-                      size="small"
-                      fullWidth
-                      label="Holiday Category *"
-                      sx={compactFieldSx}
-                      error={!!errors.holidayCategoryCode}
-                      helperText={errors.holidayCategoryCode?.message}
-                    >
-                      <MenuItem value="">--Select Category--</MenuItem>
-                      {holidayCategories.map((cat) => (
-                        <MenuItem key={cat.categoryCode} value={cat.categoryCode}>
-                          {cat.categoryName}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-              </Grid>
+//               {/* Package Code */}
+//               <Grid item xs={12} md={6}>
+//                 <Controller name="packageCode" control={control} render={({ field }) => (
+//                   <TextField {...field} size="small" fullWidth label="Package Code *" sx={sx}
+//                     error={!!errors.packageCode}
+//                     helperText={errors.packageCode?.message ?? 'Auto-generated if left empty'}
+//                     placeholder="PK000000" />
+//                 )} />
+//               </Grid>
 
-              {/* Holiday Type */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="holidayTypeIds"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControl fullWidth size="small" error={!!errors.holidayTypeIds} disabled={!selectedHolidayCategoryCode}>
-                      <InputLabel>Holiday Type *</InputLabel>
-                      <Select
-                        multiple
-                        value={field.value || []}
-                        onChange={field.onChange}
-                        input={<OutlinedInput label="Holiday Type *" />}
-                        sx={compactFieldSx}
-                        renderValue={(selected) => {
-                          if (!Array.isArray(selected) || selected.length === 0) return '';
-                          const chips = selected
-                            .map((value) => {
-                              const type = holidayTypes.find((t) => Number(t.id) === Number(value));
-                              return type ? <Chip key={`ht-${value}`} label={type.name} size="small" /> : null;
-                            })
-                            .filter(Boolean);
-                          if (chips.length === 0) return '';
-                          return <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>{chips}</Box>;
-                        }}
-                      >
-                        {holidayTypes.length === 0 ? (
-                          <MenuItem disabled value="">
-                            {selectedHolidayCategoryCode ? 'Loading...' : 'Select a category first'}
-                          </MenuItem>
-                        ) : (
-                          holidayTypes.map((type) => (
-                            <MenuItem key={`ht-item-${type.id}`} value={type.id}>
-                              <Checkbox 
-                                checked={Array.isArray(field.value) && field.value.some(v => Number(v) === Number(type.id))} 
-                                size="small" 
-                              />
-                              {type.name}
-                            </MenuItem>
-                          ))
-                        )}
-                      </Select>
-                      {errors.holidayTypeIds && <FormHelperText>{String(errors.holidayTypeIds.message)}</FormHelperText>}
-                      {!selectedHolidayCategoryCode && <FormHelperText>Please select a holiday category first</FormHelperText>}
-                      {selectedHolidayCategoryCode && holidayTypes.length > 0 && (
-                        <FormHelperText>(Press Ctrl for multiple selection)</FormHelperText>
-                      )}
-                    </FormControl>
-                  )}
-                />
-              </Grid>
+//               {/* Package Components — stored as CSV of component names */}
+//               <Grid item xs={12} md={6}>
+//                 <Controller name="componentType" control={control} render={({ field }) => {
+//                   const selected = toArr(field.value);
+//                   return (
+//                     <FormControl fullWidth size="small" error={!!errors.componentType}>
+//                       <InputLabel>Package Component *</InputLabel>
+//                       <Select
+//                         multiple
+//                         value={selected}
+//                         onChange={(e) => field.onChange(toCsv(e.target.value as string[]))}
+//                         input={<OutlinedInput label="Package Component *" />}
+//                         sx={sx}
+//                         renderValue={(sel) => (
+//                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+//                             {(sel as string[]).map((v) => <Chip key={v} label={v} size="small" />)}
+//                           </Box>
+//                         )}
+//                       >
+//                         {packageComponents.map((comp) => (
+//                           <MenuItem key={comp.id} value={comp.name}>
+//                             <Checkbox checked={selected.includes(comp.name)} size="small" />
+//                             {comp.name}
+//                           </MenuItem>
+//                         ))}
+//                       </Select>
+//                       {errors.componentType && <FormHelperText>{errors.componentType.message}</FormHelperText>}
+//                     </FormControl>
+//                   );
+//                 }} />
+//               </Grid>
 
-              {/* Package Name */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="packageName"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      size="small"
-                      fullWidth
-                      label="Package Name *"
-                      sx={compactFieldSx}
-                      error={!!errors.packageName}
-                      helperText={errors.packageName?.message}
-                      placeholder="Enter package name"
-                    />
-                  )}
-                />
-              </Grid>
+//               {/* Supplier — stores supplierId string */}
+//               <Grid item xs={12} md={6}>
+//                 <Controller name="supplierId" control={control} render={({ field }) => (
+//                   <TextField {...field} select size="small" fullWidth label="Supplier Name" sx={sx}>
+//                     <MenuItem value="0">--Select Supplier--</MenuItem>
+//                     {suppliers.map((s) => (
+//                       <MenuItem key={s.supplierId} value={String(s.supplierId)}>{s.supplierName}</MenuItem>
+//                     ))}
+//                   </TextField>
+//                 )} />
+//               </Grid>
 
-              {/* Departure City - NOW USING STRING IDs */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="departureCityIds"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControl fullWidth size="small" error={!!errors.departureCityIds}>
-                      <InputLabel>Departure City *</InputLabel>
-                      <Select
-                        multiple
-                        value={field.value || []}
-                        onChange={field.onChange}
-                        input={<OutlinedInput label="Departure City *" />}
-                        sx={compactFieldSx}
-                        renderValue={(selected) => {
-                          if (!Array.isArray(selected) || selected.length === 0) return '';
-                          const chips = selected
-                            .map((value) => {
-                              // Numeric comparison with index
-                              const city = departureCities.find((c) => c.id === value);
-                              return city ? <Chip key={`dep-${value}`} label={city.name} size="small" /> : null;
-                            })
-                            .filter(Boolean);
-                          if (chips.length === 0) return '';
-                          return <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>{chips}</Box>;
-                        }}
-                      >
-                        {departureCities.map((city) => (
-                          <MenuItem key={`dep-item-${city.id}`} value={city.id}>
-                            <Checkbox 
-                              checked={Array.isArray(field.value) && field.value.includes(city.id)} 
-                              size="small" 
-                            />
-                            {city.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      {errors.departureCityIds && <FormHelperText>{String(errors.departureCityIds.message)}</FormHelperText>}
-                    </FormControl>
-                  )}
-                />
-              </Grid>
+//               {/* Destination Cities — stored as CSV of cityId strings */}
+//               <Grid item xs={12} md={6}>
+//                 <Controller name="cityId" control={control} render={({ field }) => {
+//                   const selected = toArr(field.value);
+//                   return (
+//                     <FormControl fullWidth size="small" error={!!errors.cityId}>
+//                       <InputLabel>Destination / Cities *</InputLabel>
+//                       <Select
+//                         multiple
+//                         value={selected}
+//                         onChange={(e) => field.onChange(toCsv(e.target.value as string[]))}
+//                         input={<OutlinedInput label="Destination / Cities *" />}
+//                         sx={sx}
+//                         renderValue={(sel) => (
+//                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+//                             {(sel as string[]).map((id) => {
+//                               const c = cities.find((ci) => ci.cityId === id);
+//                               return <Chip key={id} label={c?.cityName ?? id} size="small" />;
+//                             })}
+//                           </Box>
+//                         )}
+//                       >
+//                         {cities.map((c) => (
+//                           <MenuItem key={c.cityId} value={c.cityId}>
+//                             <Checkbox checked={selected.includes(c.cityId)} size="small" />
+//                             {c.cityName}
+//                           </MenuItem>
+//                         ))}
+//                       </Select>
+//                       {errors.cityId && <FormHelperText>{errors.cityId.message}</FormHelperText>}
+//                     </FormControl>
+//                   );
+//                 }} />
+//               </Grid>
 
-              {/* Package Code */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="packageCode"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      size="small"
-                      fullWidth
-                      label="Package Code *"
-                      sx={compactFieldSx}
-                      error={!!errors.packageCode}
-                      helperText={errors.packageCode?.message || 'Auto-generated if left empty'}
-                      placeholder="PK000000"
-                    />
-                  )}
-                />
-              </Grid>
+//               {/* Remarks */}
+//               <Grid item xs={12} md={6}>
+//                 <Controller name="remarks" control={control} render={({ field }) => (
+//                   <TextField {...field} size="small" fullWidth multiline rows={3} label="Remarks" sx={sx}
+//                     placeholder="Additional notes" inputProps={{ maxLength: 300 }}
+//                     helperText={`${(field.value ?? '').length}/300 characters`} />
+//                 )} />
+//               </Grid>
 
-              {/* Package Components */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="packageComponents"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControl fullWidth size="small" error={!!errors.packageComponents}>
-                      <InputLabel>Package Component *</InputLabel>
-                      <Select
-                        multiple
-                        value={field.value || []}
-                        onChange={field.onChange}
-                        input={<OutlinedInput label="Package Component *" />}
-                        sx={compactFieldSx}
-                        renderValue={(selected) => {
-                          if (!Array.isArray(selected) || selected.length === 0) return '';
-                          const chips = selected
-                            .map((value) => <Chip key={`comp-${value}`} label={value} size="small" />)
-                            .filter(Boolean);
-                          if (chips.length === 0) return '';
-                          return <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>{chips}</Box>;
-                        }}
-                      >
-                        {packageComponents.map((comp) => (
-                          <MenuItem key={`comp-item-${comp.id}`} value={comp.name}>
-                            <Checkbox 
-                              checked={Array.isArray(field.value) && field.value.includes(comp.name)} 
-                              size="small" 
-                            />
-                            {comp.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      {errors.packageComponents && <FormHelperText>{errors.packageComponents.message}</FormHelperText>}
-                    </FormControl>
-                  )}
-                />
-              </Grid>
+//               {/* Active */}
+//               <Grid item xs={12}>
+//                 <Controller name="status" control={control} render={({ field }) => (
+//                   <FormControlLabel
+//                     control={
+//                       <Checkbox
+//                         checked={field.value === 1}
+//                         onChange={(e) => field.onChange(e.target.checked ? 1 : 0)}
+//                         size="small"
+//                       />
+//                     }
+//                     label={<Typography variant="body2" sx={{ fontWeight: 500 }}>Active</Typography>}
+//                   />
+//                 )} />
+//               </Grid>
 
-              {/* Supplier Name */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="supplierName"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      select
-                      size="small"
-                      fullWidth
-                      label="Supplier Name"
-                      sx={compactFieldSx}
-                      error={!!errors.supplierName}
-                      helperText={errors.supplierName?.message}
-                    >
-                      <MenuItem value="">--Select Supplier--</MenuItem>
-                      {suppliers.map((supplier) => (
-                        <MenuItem key={`sup-${supplier.id}`} value={supplier.name}>
-                          {supplier.name}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
-                />
-              </Grid>
+//             </Grid>
+//           </CardContent>
+//         </Card>
+//       </Paper>
+//     </Box>
+//   );
+// };
 
-              {/* Destination Cities - NOW USING STRING IDs */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="destinationCityIds"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControl fullWidth size="small" error={!!errors.destinationCityIds}>
-                      <InputLabel>Destination / Cities *</InputLabel>
-                      <Select
-                        multiple
-                        value={field.value || []}
-                        onChange={field.onChange}
-                        input={<OutlinedInput label="Destination / Cities *" />}
-                        sx={compactFieldSx}
-                        renderValue={(selected) => {
-                          if (!Array.isArray(selected) || selected.length === 0) return '';
-                          const chips = selected
-                            .map((value) => {
-                              // Numeric comparison with index
-                              const city = destinationCities.find((c) => c.id === value);
-                              return city ? <Chip key={`dest-${value}`} label={city.name} size="small" /> : null;
-                            })
-                            .filter(Boolean);
-                          if (chips.length === 0) return '';
-                          return <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>{chips}</Box>;
-                        }}
-                      >
-                        {destinationCities.map((city) => (
-                          <MenuItem key={`dest-item-${city.id}`} value={city.id}>
-                            <Checkbox 
-                              checked={Array.isArray(field.value) && field.value.includes(city.id)} 
-                              size="small" 
-                            />
-                            {city.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      {errors.destinationCityIds && <FormHelperText>{String(errors.destinationCityIds.message)}</FormHelperText>}
-                    </FormControl>
-                  )}
-                />
-              </Grid>
-
-              {/* Remarks */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="remarks"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      size="small"
-                      fullWidth
-                      multiline
-                      rows={3}
-                      label="Remarks"
-                      sx={compactFieldSx}
-                      placeholder="Enter any additional notes or remarks"
-                      inputProps={{ maxLength: 300 }}
-                      helperText={`${(field.value || '').length}/300 characters`}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {/* Active Checkbox */}
-              <Grid item xs={12}>
-                <Controller
-                  name="isActive"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={<Checkbox {...field} checked={field.value} size="small" />}
-                      label={<Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Active</Typography>}
-                    />
-                  )}
-                />
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-      </Paper>
-    </Box>
-  );
-};
-
-export default Step2PackageDetails;
+// export default Step2PackageDetails;

@@ -41,7 +41,7 @@ import type { CreatePackageRequest } from '@/services/package/package.models';
 interface Step9Props {
   formData: Partial<CreatePackageRequest>;
   updateFormData: (data: Partial<CreatePackageRequest>) => void;
-  onValidationChange: (isValid: boolean) => void;
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 const cancellationSchema = z.object({
@@ -71,7 +71,7 @@ const Step9CancellationRules: React.FC<Step9Props> = ({ formData, updateFormData
   const amountType = watch('amountType');
 
   useEffect(() => {
-    onValidationChange(true); // cancellation rules are optional
+    onValidationChange?.(true); // cancellation rules are optional
   }, [onValidationChange]);
 
   const onSubmit = (data: CancellationFormData) => {

@@ -20,7 +20,6 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -38,7 +37,7 @@ import type { CreatePackageRequest } from '@/services/package/package.models';
 interface Step6Props {
   formData: Partial<CreatePackageRequest>;
   updateFormData: (data: Partial<CreatePackageRequest>) => void;
-  onValidationChange: (isValid: boolean) => void;
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 const destinationSchema = z.object({
@@ -80,7 +79,7 @@ const Step6DestinationDetails: React.FC<Step6Props> = ({ formData, updateFormDat
 
   useEffect(() => {
     // Destination details are optional
-    onValidationChange(true);
+    onValidationChange?.(true);
   }, [formData.destinations, onValidationChange]);
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
