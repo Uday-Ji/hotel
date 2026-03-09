@@ -3,8 +3,6 @@ import type {
   PackageFormData, PackageListRequest, PackageListItem,
   UpdatePackageStatusRequest, CreateAndUpdatePackageResponse,
   HolidayCategory, HolidayType, Language, Market, PackageSupplier,
-  SavedPackageImage,
-  SavePackageImagePayload,
 } from './package.models';
 import { mapApiResponseToFormData } from './package.models';
 import { envConfig } from '@/config';
@@ -169,10 +167,15 @@ class PackageService {
   }
 
   async getTabsTypeList(): Promise<any[]> {
-    const res = await apiClient.post<ApiResponse<any[]>>(
-      '/Package/TabsTypeList', { companyCode: this.cc },
-    );
-    return res.data.data;
+    try {
+      const res = await apiClient.post<ApiResponse<any[]>>(
+        '/Package/TabsTypeList', { companyCode: this.cc },
+      );
+      return res.data?.data || [];
+    } catch (error) {
+      console.warn('Failed to fetch TabsTypeList, returning empty array:', error);
+      return [];
+    }
   }
 
   async createTabsType(data: any): Promise<any> {
@@ -253,6 +256,174 @@ class PackageService {
 
     return res.data;
   }
+
+  async getPackageItineraries(packageId: number, companyCode: string=this.cc) {
+  const response = await apiClient.post('/Package/GetPackageItineraries', {
+    packageId,
+    companyCode,
+  });
+  return response.data;
+}
+
+/**
+ * Get package inclusions
+ */
+async getPackageInclusions(packageId: number, companyCode: string= this.cc) {
+  const response = await apiClient.post('/Package/GetPackageInclusions', {
+    packageId,
+    companyCode,
+  });
+  return response.data;
+}
+
+/**
+ * Create new itinerary day
+ */
+async createPackageItinerary(data: any) {
+  data.companyCode = this.cc;
+  const response = await apiClient.post('/Package/PostPackageItinary', data);
+  return response.data;
+}
+
+/**
+ * Update existing itinerary day
+ */
+async updatePackageItinerary(data: any) {
+  data.companyCode = this.cc;
+  const response = await apiClient.post('/Package/PostPackageItinary', data);
+  return response.data;
+}
+
+/**
+ * Delete itinerary day
+ */
+async deletePackageItinerary(packageItineraryId: number) {
+  const response = await apiClient.post('/Package/DeleteItinerary', {
+    packageItineraryId,
+  });
+  return response.data;
+}
+
+/**
+ * Upload images for itinerary day
+ */
+async uploadItineraryImages(formData: FormData) {
+  const response = await apiClient.post('/Package/UploadItineraryImages', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+}
+
+/**
+ * Delete itinerary image
+ */
+async deleteItineraryImage(imageId: number) {
+  const response = await apiClient.post('/Package/DeleteItineraryImage', {
+    imageId,
+  });
+  return response.data;
+}
+
+/**
+ * Add package inclusion
+ */
+async createPackageInclusion(data: {
+  packageInclusionId: number;
+  packageId: number;
+  specType: number;
+  userId: number;
+  description: string;
+  sequenceNo: number;
+  status: number;
+}) {
+  const response = await apiClient.post('/Package/PostPackageInclusion', data);
+  return response.data;
+}
+/**
+ * Get package inclusions
+ */
+async getPackageInclusionsList(packageId: number) {
+  const response = await apiClient.post('/Package/GetPackageInclusions', {
+    packageId,
+    companyCode: this.cc,
+  });
+  return response.data?.data || [];
+}
+
+async uploadItineraryImage(data: {
+  imageId: number;
+  packageItineraryId: number;
+  userId: number;
+  thumbnailImage: string;
+  bigImage: string;
+  imageTag: string;
+  status: boolean;
+  companyCode: string;
+}) {
+  const response = await apiClient.post('/Package/PostPackageItineraryImage', data);
+  return response.data;
+}
+
+/**
+ * Update inclusion
+ */
+async updateInclusion(data: {
+  id: number;
+  description: string;
+  isActive: boolean;
+  companyCode: string;
+}) {
+  const response = await apiClient.post('/Package/UpdateInclusion', data);
+  return response.data;
+}
+
+/**
+ * Update exclusion
+ */
+async updateExclusion(data: {
+  id: number;
+  description: string;
+  isActive: boolean;
+  companyCode: string;
+}) {
+  const response = await apiClient.post('/Package/UpdateExclusion', data);
+  return response.data;
+}
+
+/**
+ * Delete inclusion
+ */
+async deleteInclusion(id: number) {
+  const response = await apiClient.post('/Package/DeleteInclusion', { id });
+  return response.data;
+}
+
+/**
+ * Delete exclusion
+ */
+async deleteExclusion(id: number) {
+  const response = await apiClient.post('/Package/DeleteExclusion', { id });
+  return response.data;
+}
+
+async getPackageTabList(holidayTypeCodes: string, companyCode: string = this.cc) {
+  const response = await apiClient.post('/Package/PackageTabList', {
+    holidayTypeCodes,
+    companyCode,
+  });
+  return response.data;
+}
+
+
+async getPackageDestination(packageId: string, companyCode: string = this.cc) {
+  const response = await apiClient.post('/Package/PackageDestination', {
+    packageId,
+    companyCode,
+  });
+  return response.data;
+}
 
 }
 

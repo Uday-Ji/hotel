@@ -1,0 +1,613 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   BATCH IMAGE UPLOADER - STYLES
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Container ──────────────────────────────────────────────────────────── */
+
+.batch-uploader-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0px;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.batch-uploader-header {
+  margin-bottom: 32px;
+}
+
+.batch-uploader-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.batch-uploader-subtitle {
+  font-size: 15px;
+  color: #7b8aa0;
+  margin: 0;
+}
+
+/* ── Rows Container ─────────────────────────────────────────────────────── */
+
+.batch-uploader-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+/* ── Row Card ───────────────────────────────────────────────────────────── */
+
+.batch-row-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 14px 18px;
+  border: 1px solid #e4e7ef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.batch-row-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.batch-row-content {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ── Upload Boxes ───────────────────────────────────────────────────────── */
+
+.batch-upload-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.batch-upload-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.batch-upload-area {
+  width: 150px;
+  height: 50px;
+  border: 2px dashed #d9dde7;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #f9fafb;
+  overflow: hidden;
+  position: relative;
+}
+
+.batch-upload-area:hover {
+  border-color: #667eea;
+  background: #f3f4f6;
+}
+
+.batch-upload-area.has-image {
+  border-style: solid;
+  border-color: #10b981;
+  background: transparent;
+}
+
+.batch-upload-text {
+  font-size: 13px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.batch-upload-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.batch-upload-input {
+  display: none;
+}
+
+/* ── Category Input ─────────────────────────────────────────────────────── */
+
+.batch-category-box {
+  flex: 1;
+  min-width: 200px;
+}
+
+.batch-category-input,
+.batch-category-select {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #d9dde7;
+  font-size: 15px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.batch-category-input:focus,
+.batch-category-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ── Status Dropdown ────────────────────────────────────────────────────── */
+
+.batch-status-box {
+  min-width: 120px;
+}
+
+.batch-status-select {
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1px solid #d9dde7;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.batch-status-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ── Delete Button ──────────────────────────────────────────────────────── */
+
+.batch-delete-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: #fee2e2;
+  color: #ef4444;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.batch-delete-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+/* ── Add Row Button ─────────────────────────────────────────────────────── */
+
+.batch-add-row-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  border: 2px dashed #667eea;
+  background: transparent;
+  color: #667eea;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+}
+
+.batch-add-row-btn:hover {
+  background: rgba(102, 126, 234, 0.05);
+  border-color: #5568d3;
+}
+
+/* ── Upload All Button ──────────────────────────────────────────────────── */
+
+.batch-upload-all-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.batch-upload-all-btn {
+  padding: 16px 46px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.35);
+}
+
+.batch-upload-all-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.45);
+}
+
+.batch-upload-all-btn:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   UPLOAD MODAL
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Modal Overlay ──────────────────────────────────────────────────────── */
+
+.batch-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Modal Container ────────────────────────────────────────────────────── */
+
+.batch-modal-container {
+  width: 90%;
+  max-width: 1100px;
+  max-height: 85vh;
+  background: #f7f8fb;
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ── Modal Header ───────────────────────────────────────────────────────── */
+
+.batch-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.batch-modal-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 6px 0;
+}
+
+.batch-modal-subtitle {
+  font-size: 15px;
+  color: #7b8aa0;
+  margin: 0;
+}
+
+.batch-modal-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #9aa3b2;
+  font-size: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  line-height: 1;
+  font-weight: 300;
+}
+
+.batch-modal-close:hover:not(:disabled) {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.batch-modal-close:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ── Modal Rows ─────────────────────────────────────────────────────────── */
+
+.batch-modal-rows {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.batch-modal-rows::-webkit-scrollbar {
+  width: 8px;
+}
+
+.batch-modal-rows::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+
+.batch-modal-rows::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 10px;
+}
+
+.batch-modal-rows::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* ── Modal Row Card ─────────────────────────────────────────────────────── */
+
+.batch-modal-row-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 18px;
+  border: 1px solid #e4e7ef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.batch-modal-row-top {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ── Modal Image Group ──────────────────────────────────────────────────── */
+
+.batch-modal-image-group {
+  display: flex;
+  gap: 18px;
+}
+
+.batch-modal-image-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.batch-modal-image-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.batch-modal-image-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #e9edf5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.batch-modal-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Modal Category ─────────────────────────────────────────────────────── */
+
+.batch-modal-category {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.batch-modal-category-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* ── Modal Status ───────────────────────────────────────────────────────── */
+
+.batch-modal-status {
+  min-width: 100px;
+  display: flex;
+  justify-content: center;
+}
+
+.batch-modal-status-badge {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.batch-modal-status-badge.active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.batch-modal-status-badge.inactive {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ── Modal Upload Status ────────────────────────────────────────────────── */
+
+.batch-modal-upload-status {
+  min-width: 120px;
+  text-align: right;
+}
+
+.batch-status-pending {
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.batch-status-uploading {
+  color: #3b82f6;
+  font-size: 14px;
+  font-weight: 600;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.batch-status-success {
+  color: #10b981;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.batch-status-error {
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ── Progress Section ───────────────────────────────────────────────────── */
+
+.batch-modal-progress-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.batch-modal-progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.batch-modal-progress-label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.batch-modal-progress-percentage {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 700;
+}
+
+.batch-modal-progress-bar {
+  height: 8px;
+  background: #e6e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.batch-modal-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.3s ease;
+  border-radius: 10px;
+}
+
+/* ── Error Message ──────────────────────────────────────────────────────── */
+
+.batch-modal-error-message {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fee2e2;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .batch-row-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .batch-upload-box {
+    width: 100%;
+  }
+
+  .batch-upload-area {
+    width: 100%;
+  }
+
+  .batch-category-box {
+    width: 100%;
+  }
+
+  .batch-status-box {
+    width: 100%;
+  }
+
+  .batch-delete-btn {
+    align-self: flex-end;
+  }
+
+  .batch-modal-container {
+    width: 95%;
+    padding: 20px;
+  }
+
+  .batch-modal-row-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .batch-modal-category,
+  .batch-modal-status,
+  .batch-modal-upload-status {
+    text-align: left;
+  }
+}

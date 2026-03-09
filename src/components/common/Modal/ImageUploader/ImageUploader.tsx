@@ -4,7 +4,6 @@ import {
   IconButton,
   Typography,
   Tooltip,
-  Chip,
 } from '@mui/material';
 import { CloudUpload, Close, AddPhotoAlternate, ZoomIn } from '@mui/icons-material';
 import styles from './ImageUploader.module.css';
@@ -153,8 +152,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = (props) => {
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
-
-  const shouldShowDropZone = currentImages.length === 0 || (!hideAddMore && isMulti && canAddMore && currentImages.length > 0);
 
   return (
     <Box className={styles.root}>

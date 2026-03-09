@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import {
   Grid, TextField, FormControl, InputLabel, Select, MenuItem,
   Card, CardContent, Typography, Chip, Box, OutlinedInput,
-  FormControlLabel, Checkbox, Divider, FormHelperText, Paper,
-  CircularProgress, RadioGroup, Radio, FormLabel,
+  FormControlLabel, Checkbox, Divider, FormHelperText,
+  RadioGroup, Radio, FormLabel,
 } from '@mui/material';
 import { Place as PlaceIcon, Description as DescIcon, CalendarMonth as CalIcon } from '@mui/icons-material';
 import { DatePicker }          from '@mui/x-date-pickers/DatePicker';
@@ -67,7 +67,7 @@ const DAYS = [
 const StepPackageDetail: React.FC<StepPackageDetailProps> = ({
   formData, updateFormData, onValidationChange,
   onDirtyChange = () => {}, // Default to no-op
-  isEditMode = false, loading = false,
+  isEditMode = false,
   regions, countries,
   holidayCategories, holidayTypes, languages, markets, cities, suppliers, packageComponents,
 }) => {
@@ -195,19 +195,23 @@ const StepPackageDetail: React.FC<StepPackageDetailProps> = ({
             <Grid container spacing={2.5}>
 
               <Grid item xs={12} md={6}>
-                <Controller name="regionId" control={control} render={({ field }) => (
-                  <FormControl fullWidth size="small" error={!!errors.regionId} disabled={isEditMode}>
-                    <InputLabel>Region *</InputLabel>
-                    <Select {...field} label="Region *" sx={sx} disabled={isEditMode}>
-                      <MenuItem value={0}>--Select Region--</MenuItem>
-                      {regions.map((r) => (
-                        <MenuItem key={r.regionId} value={r.regionId}>{r.regionName}</MenuItem>
-                      ))}
-                    </Select>
-                    {errors.regionId && <FormHelperText>{errors.regionId.message}</FormHelperText>}
-                    {isEditMode && <FormHelperText>Region cannot be changed in edit mode</FormHelperText>}
-                  </FormControl>
-                )} />
+                <Controller name="regionId" control={control} render={({ field }) => {
+                  // Ensure the selected value exists in the regions list, otherwise default to 0
+                  const validValue = regions.some(r => r.regionId === field.value) ? field.value : 0;
+                  return (
+                    <FormControl fullWidth size="small" error={!!errors.regionId} disabled={isEditMode}>
+                      <InputLabel>Region *</InputLabel>
+                      <Select {...field} value={validValue} label="Region *" sx={sx} disabled={isEditMode}>
+                        <MenuItem value={0}>--Select Region--</MenuItem>
+                        {regions.map((r) => (
+                          <MenuItem key={r.regionId} value={r.regionId}>{r.regionName}</MenuItem>
+                        ))}
+                      </Select>
+                      {errors.regionId && <FormHelperText>{errors.regionId.message}</FormHelperText>}
+                      {isEditMode && <FormHelperText>Region cannot be changed in edit mode</FormHelperText>}
+                    </FormControl>
+                  );
+                }} />
               </Grid>
 
               <Grid item xs={12} md={6}>
@@ -396,14 +400,18 @@ const StepPackageDetail: React.FC<StepPackageDetailProps> = ({
 
               {/* Supplier */}
               <Grid item xs={12} md={6}>
-                <Controller name="supplierId" control={control} render={({ field }) => (
-                  <TextField {...field} select size="small" fullWidth label="Supplier" sx={sx}>
-                    <MenuItem value="0">--Select Supplier--</MenuItem>
-                    {suppliers.map((s) => (
-                      <MenuItem key={s.supplierId} value={String(s.supplierId)}>{s.supplierName}</MenuItem>
-                    ))}
-                  </TextField>
-                )} />
+                <Controller name="supplierId" control={control} render={({ field }) => {
+                  // Ensure the selected value exists in the suppliers list, otherwise default to "0"
+                  const validValue = suppliers.some(s => String(s.supplierId) === String(field.value)) ? String(field.value) : '0';
+                  return (
+                    <TextField {...field} value={validValue} select size="small" fullWidth label="Supplier" sx={sx}>
+                      <MenuItem value="0">--Select Supplier--</MenuItem>
+                      {suppliers.map((s) => (
+                        <MenuItem key={s.supplierId} value={String(s.supplierId)}>{s.supplierName}</MenuItem>
+                      ))}
+                    </TextField>
+                  );
+                }} />
               </Grid>
 
               {/* Destination Cities (CSV of cityId) */}
@@ -601,14 +609,18 @@ const StepPackageDetail: React.FC<StepPackageDetailProps> = ({
                 )} />
               </Grid>
               <Grid item xs={12} md={6}>
-                <Controller name="bookingType" control={control} render={({ field }) => (
-                  <TextField {...field} select fullWidth label="Booking Type *"
-                    error={!!errors.bookingType} helperText={errors.bookingType?.message}
-                    sx={sx} size="small">
-                    <MenuItem value="1">Offline</MenuItem>
-                    <MenuItem value="2">Online</MenuItem>
-                  </TextField>
-                )} />
+                <Controller name="bookingType" control={control} render={({ field }) => {
+                  // Ensure booking type is either "1" or "2", otherwise default to "1"
+                  const validValue = ['1', '2'].includes(String(field.value)) ? String(field.value) : '1';
+                  return (
+                    <TextField {...field} value={validValue} select fullWidth label="Booking Type *"
+                      error={!!errors.bookingType} helperText={errors.bookingType?.message}
+                      sx={sx} size="small">
+                      <MenuItem value="1">Offline</MenuItem>
+                      <MenuItem value="2">Online</MenuItem>
+                    </TextField>
+                  );
+                }} />
               </Grid>
 
             </Grid>

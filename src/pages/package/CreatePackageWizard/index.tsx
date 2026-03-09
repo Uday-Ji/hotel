@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams }    from 'react-router-dom';
 import { ToastContainer, toast }     from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Box, Paper, Button, Typography, LinearProgress } from '@mui/material';
+import { Box, Paper, Button, Typography } from '@mui/material';
 import { CircularProgress } from '@mui/material';
 import { CheckCircle }               from '@mui/icons-material';
 import StepPackageDetail             from './steps/StepPackageDetail';
@@ -258,7 +258,7 @@ const CreatePackageWizard: React.FC = () => {
         />
       );
       case 1: return <Step4UploadImages packageId={packageId || 0} {...common} />;
-      case 2: return <Step5ItineraryManage {...common} />;
+      case 2: return <Step5ItineraryManage packageId={packageId || 0} {...common} />;
       case 3: return <Step6DestinationDetails {...common} />;
       case 4: return <Step7HotelMapping {...common} />;
       case 5: return <Step8PackageCosting {...common} />;

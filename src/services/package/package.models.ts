@@ -6,6 +6,8 @@
 // After that, formData IS the API payload — no further mapping anywhere.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { z } from 'zod';
+
 // ── Utility ───────────────────────────────────────────────────────────────────
 
 export const toISODate = (val: string | null | undefined): string => {
@@ -25,7 +27,7 @@ export interface HolidayCategory {
   status?:   string;
 }
 
-export interface HolidayType     { holidayTypeID: number; holidayTypeName: string; }
+export interface HolidayType     { holidayTypeID: number; holidayTypeName: string; holidayTypeCode:string;  }
 export interface Language        { languageCode: string;  languageName: string; }
 export interface Market          { marketId: number;      marketName: string; }
 export interface PackageSupplier { supplierId: number;    supplierName: string; }
@@ -258,3 +260,26 @@ export interface SavedPackageImage {
   createdAt: string;
   status: 'active' | 'inactive';
 }
+
+// ── Package Inclusions & Exclusions ───────────────────────────────────────────
+
+export interface PackageInclusion {
+  id: number;
+  packageId: number;
+  description: string;
+  tabType?: string;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+// ── Zod Schemas for Inclusions ──────────────────────────────────────────
+
+export const inclusionSchema = z.object({
+  description: z.string()
+    .min(10, 'Description must be at least 10 characters')
+    .max(500, 'Description cannot exceed 500 characters'),
+  tabType: z.string().optional(),
+  isActive: z.boolean().default(true),
+});
+
+export type InclusionFormData = z.infer<typeof inclusionSchema>;
