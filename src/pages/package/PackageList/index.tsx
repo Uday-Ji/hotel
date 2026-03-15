@@ -58,7 +58,7 @@ type ViewMode = 'card' | 'list';
 
 const PackageList: React.FC = () => {
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<ViewMode>('card');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [packages, setPackages] = useState<PackageListItem[]>([]);
   const [filteredPackages, setFilteredPackages] = useState<PackageListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -77,7 +77,7 @@ const PackageList: React.FC = () => {
     regionId: 0,
     countryIds: '',
     holidayCategoryCode: '',
-    validityFrom: new Date().toISOString().split('T')[0],
+    validityFrom: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     validityTo: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     packageName: '',
     companyCode: 'SMT',
@@ -493,7 +493,7 @@ const handleStatusUpdateSuccess = () => {
                   <TableCell className={styles.tableHeaderCell} align="center">
                     Days
                   </TableCell>
-                  <TableCell className={styles.tableHeaderCell}>Validity</TableCell>
+                  <TableCell className={styles.tableHeaderCell} >Validity</TableCell>
                   <TableCell className={styles.tableHeaderCell}>Price</TableCell>
                   <TableCell className={styles.tableHeaderCell}>Status</TableCell>
                   <TableCell className={styles.tableHeaderCell}>Features</TableCell>

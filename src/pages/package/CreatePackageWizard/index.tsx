@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams }    from 'react-router-dom';
-import { ToastContainer, toast }     from 'react-toastify';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Box, Paper, Button, Typography } from '@mui/material';
 import { CircularProgress } from '@mui/material';
-import { CheckCircle }               from '@mui/icons-material';
-import StepPackageDetail             from './steps/StepPackageDetail';
-import Step4UploadImages             from './steps/Step4UploadImages';
-import Step5ItineraryManage          from './steps/Step5ItineraryManage';
-import Step6DestinationDetails       from './steps/Step6DestinationDetails';
-import Step7HotelMapping             from './steps/Step7HotelMapping';
-import Step8PackageCosting           from './steps/Step8PackageCosting';
-import Step9CancellationRules        from './steps/Step9CancellationRules';
-import { packageService }            from '@/services/package/package.service';
+import { CheckCircle } from '@mui/icons-material';
+import StepPackageDetail from './steps/StepPackageDetail';
+import Step4UploadImages from './steps/Step4UploadImages';
+import Step5ItineraryManage from './steps/Step5ItineraryManage';
+import Step6DestinationDetails from './steps/Step6DestinationDetails';
+import Step7HotelMapping from './steps/Step7HotelMapping';
+import Step8PackageCosting from './steps/Step8PackageCosting';
+import Step9CancellationRules from './steps/Step9CancellationRules';
+import { packageService } from '@/services/package/package.service';
 import {
   DEFAULT_FORM_DATA,
   type PackageFormData,
@@ -49,38 +49,49 @@ const DEFAULT_COMPONENTS = [
 ];
 
 interface DropdownState {
-  regions:           any[];
-  countries:         any[];
+  regions: any[];
+  countries: any[];
   holidayCategories: HolidayCategory[];
-  holidayTypes:      HolidayType[];
-  languages:         Language[];
-  markets:           Market[];
-  cities:            any[];
-  suppliers:         PackageSupplier[];
+  holidayTypes: HolidayType[];
+  languages: Language[];
+  markets: Market[];
+  cities: any[];
+  suppliers: PackageSupplier[];
   packageComponents: { id: number; name: string }[];
+  factsTypes: any[];
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const CreatePackageWizard: React.FC = () => {
-  const navigate                   = useNavigate();
-  const { id: routePackageId }     = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { id: routePackageId } = useParams<{ id: string }>();
 
-  const [activeTab,        setActiveTab]        = useState(0);
+  const [activeTab, setActiveTab] = useState(0);
   // Track validity and dirty state for Package Detail tab
   const [packageDetailValid, setPackageDetailValid] = useState(false);
   const [packageDetailDirty, setPackageDetailDirty] = useState(false);
-  const [isLoading,        setIsLoading]        = useState(false);
+  const [destinationDetailValid, setDestinationDetailValid] = useState(false);
+  const [hotelMappingValid, setHotelMappingValid] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
   const [dropdownsLoading, setDropdownsLoading] = useState(true);
-  const [editReady,        setEditReady]        = useState(!routePackageId);
-  const [packageId,        setPackageId]        = useState<number | null>(null);
-  const [isEditMode,       setIsEditMode]       = useState(!!routePackageId);
-  const [formData,         setFormData]         = useState<PackageFormData>(DEFAULT_FORM_DATA);
+  const [editReady, setEditReady] = useState(!routePackageId);
+  const [packageId, setPackageId] = useState<number | null>(null);
+  const [isEditMode, setIsEditMode] = useState(!!routePackageId);
+  const [formData, setFormData] = useState<PackageFormData>(DEFAULT_FORM_DATA);
 
   const [dropdowns, setDropdowns] = useState<DropdownState>({
-    regions: [], countries: [], holidayCategories: [], holidayTypes: [],
-    languages: [], markets: [], cities: [], suppliers: [],
+    regions: [],
+    countries: [],
+    holidayCategories: [],
+    holidayTypes: [],
+    languages: [],
+    markets: [],
+    cities: [],
+    suppliers: [],
     packageComponents: DEFAULT_COMPONENTS,
+    factsTypes: [],
   });
 
   // ── 1. Bootstrap ──────────────────────────────────────────────────────────
@@ -94,17 +105,18 @@ const CreatePackageWizard: React.FC = () => {
       packageService.getMarketList(),
       packageService.getCitiesList(),
       packageService.PackageSuppliersList(),
+      packageService.getFactsTypeList(),
     ])
-      .then(async ([regions, holidayCategories, languages, markets, cities, suppliers]) => {
-        setDropdowns((p) => ({ ...p, regions, holidayCategories, languages, markets, cities, suppliers }));
+      .then(async ([regions, holidayCategories, languages, markets, cities, suppliers, factsTypes]) => {
+        setDropdowns((p) => ({ ...p, regions, holidayCategories, languages, markets, cities, suppliers, factsTypes }));
 
         if (routePackageId) {
           setIsLoading(true);
           try {
             const data = await packageService.getPackageById(Number(routePackageId));
             const [countries, holidayTypes] = await Promise.all([
-              data.regionId   ? packageService.getCountryByRegion(data.regionId)         : Promise.resolve([]),
-              data.categoryId ? packageService.getHolidayTypeList(data.categoryId)       : Promise.resolve([]),
+              data.regionId ? packageService.getCountryByRegion(data.regionId) : Promise.resolve([]),
+              data.categoryId ? packageService.getHolidayTypeList(data.categoryId) : Promise.resolve([]),
             ]);
             setDropdowns((p) => ({ ...p, countries, holidayTypes }));
             setFormData(data);
@@ -119,7 +131,7 @@ const CreatePackageWizard: React.FC = () => {
       })
       .catch(() => toast.error('Failed to load dropdown data'))
       .finally(() => setDropdownsLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── 2. Cascade: countries on region change (create mode only) ─────────────
@@ -128,7 +140,7 @@ const CreatePackageWizard: React.FC = () => {
     if (!formData.regionId || isEditMode) return;
     packageService.getCountryByRegion(formData.regionId)
       .then((countries) => setDropdowns((p) => ({ ...p, countries })))
-      .catch(()         => setDropdowns((p) => ({ ...p, countries: [] })));
+      .catch(() => setDropdowns((p) => ({ ...p, countries: [] })));
   }, [formData.regionId, isEditMode]);
 
   // ── 3. Cascade: holiday types on category change (create mode only) ───────
@@ -137,7 +149,7 @@ const CreatePackageWizard: React.FC = () => {
     if (!formData.categoryId || isEditMode) return;
     packageService.getHolidayTypeList(formData.categoryId)
       .then((holidayTypes) => setDropdowns((p) => ({ ...p, holidayTypes })))
-      .catch(()            => setDropdowns((p) => ({ ...p, holidayTypes: [] })));
+      .catch(() => setDropdowns((p) => ({ ...p, holidayTypes: [] })));
   }, [formData.categoryId, isEditMode]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -200,7 +212,7 @@ const CreatePackageWizard: React.FC = () => {
     if (!validateCurrentTab()) return;
     setIsLoading(true);
     try {
-      const res   = await packageService.savePackage(formData, 0);
+      const res = await packageService.savePackage(formData, 0);
       const newId = res.referenceId;
       setPackageId(newId);
       setIsEditMode(true);
@@ -230,11 +242,7 @@ const CreatePackageWizard: React.FC = () => {
 
   const renderTabContent = () => {
     if (!editReady || isLoading || dropdownsLoading) {
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
-          <CircularProgress size={32} />
-        </Box>
-      );
+      return null;
     }
 
     const common = { formData, updateFormData };
@@ -259,8 +267,28 @@ const CreatePackageWizard: React.FC = () => {
       );
       case 1: return <Step4UploadImages packageId={packageId || 0} {...common} />;
       case 2: return <Step5ItineraryManage packageId={packageId || 0} {...common} />;
-      case 3: return <Step6DestinationDetails {...common} />;
-      case 4: return <Step7HotelMapping {...common} />;
+      case 3: return (
+        <Step6DestinationDetails
+          formData={formData}
+          updateFormData={updateFormData}
+          packageId={packageId || 0}
+          isEditMode={isEditMode}
+          loading={dropdownsLoading}
+          countries={dropdowns.countries}
+          cities={dropdowns.cities}
+          factsTypes={dropdowns.factsTypes}
+          onValidationChange={setDestinationDetailValid}
+        />
+      );
+      case 4: return <Step7HotelMapping
+            formData={formData}
+            updateFormData={updateFormData}
+            packageId={packageId || 0}
+            isEditMode={isEditMode}
+            loading={dropdownsLoading}
+            cities={dropdowns.cities}
+            onValidationChange={setHotelMappingValid}
+          />;
       case 5: return <Step8PackageCosting {...common} />;
       case 6: return <Step9CancellationRules {...common} />;
       default: return null;
@@ -273,7 +301,7 @@ const CreatePackageWizard: React.FC = () => {
 
   return (
     <Box className={styles.container}>
-      <Paper className={styles.paper} elevation={0}>       
+      <Paper className={styles.paper} elevation={0}>
         <Box className={styles.header}>
           <Typography className={styles.title} variant="h5">
             {isEditMode ? 'Update Package' : 'Create New Package'}
@@ -292,7 +320,7 @@ const CreatePackageWizard: React.FC = () => {
               >
                 {isCreateTab
                   ? (isLoading ? 'Creating...' : 'Create Package')
-                  : (isLoading ? 'Saving...'   : 'Save Changes')}
+                  : (isLoading ? 'Saving...' : 'Save Changes')}
               </Button>
             </Box>
           )}
@@ -301,15 +329,15 @@ const CreatePackageWizard: React.FC = () => {
         <Box className={styles.tabsRow}>
           {TABS.map((label, i) => {
             const disabled = !isEditMode && !packageId && i > 0;
-            const active   = activeTab === i;
+            const active = activeTab === i;
             return (
               <Button key={label}
                 onClick={() => { if (!disabled) setActiveTab(i); }}
                 disabled={disabled}
                 disableRipple={disabled}
                 sx={{
-                  fontWeight:   active ? 700 : 400,
-                  color:        active ? '#1976d2' : '#6b7280',
+                  fontWeight: active ? 700 : 400,
+                  color: active ? '#1976d2' : '#6b7280',
                   borderBottom: active ? '2px solid #1976d2' : '2px solid transparent',
                   borderRadius: 0, minWidth: 'max-content', px: 2, py: 1.25, fontSize: 14,
                   opacity: disabled ? 0.45 : 1, transition: 'all 0.15s ease',
@@ -331,7 +359,7 @@ const CreatePackageWizard: React.FC = () => {
         <Box className={styles.scrollBody}>
           <ToastContainer position="top-right" autoClose={3000} newestOnTop
             closeOnClick pauseOnFocusLoss draggable pauseOnHover />
-           <Box className={styles.stepContent}>
+          <Box className={styles.stepContent}>
             {renderTabContent()}
           </Box>
         </Box>

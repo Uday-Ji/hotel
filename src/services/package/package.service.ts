@@ -139,6 +139,28 @@ class PackageService {
     return res.data.data;
   }
 
+  // ── Additional Dropdowns (for Step6 Destination Details) ────────────────
+
+  /**
+   * Get list of countries
+   */
+  async getCountriesList(): Promise<any[]> {
+    const res = await apiClient.post<ApiResponse<any[]>>(
+      '/Common/CountryList', { companyCode: this.cc, status: 1 },
+    );
+    return res.data.data;
+  }
+
+  /**
+   * Get list of cities by country
+   */
+  async getCitiesByCountry(countryCode: string): Promise<any[]> {
+    const res = await apiClient.post<ApiResponse<any[]>>(
+      '/Common/CityListByCountry', { countryCode, companyCode: this.cc },
+    );
+    return res.data.data;
+  }
+
   // ── CRUD for admin pages (HolidayCategoryMaster, TabsType, FactsType) ────
 
   async getHolidayCategoryTypeMappingList(): Promise<any[]> {
@@ -198,7 +220,7 @@ class PackageService {
 
   async getFactsTypeList(): Promise<any[]> {
     const res = await apiClient.post<ApiResponse<any[]>>(
-      '/Package/FactsTypeList', { companyCode: this.cc },
+      '/Package/DestinationFactList', { companyCode: this.cc },
     );
     return res.data.data;
   }
@@ -341,6 +363,7 @@ async createPackageInclusion(data: {
   const response = await apiClient.post('/Package/PostPackageInclusion', data);
   return response.data;
 }
+
 /**
  * Get package inclusions
  */
@@ -416,11 +439,110 @@ async getPackageTabList(holidayTypeCodes: string, companyCode: string = this.cc)
   return response.data;
 }
 
-
-async getPackageDestination(packageId: string, companyCode: string = this.cc) {
+/**
+ * Get package destinations with images
+ * Endpoint: {api/Package/PackageDestination}
+ */
+async getPackageDestination(packageId: string | number, companyCode: string = this.cc) {
   const response = await apiClient.post('/Package/PackageDestination', {
     packageId,
     companyCode,
+  });
+  return response.data;
+}
+
+/**
+ * Create or update package destination
+ * Endpoint: {api/Package/PostPackageDestination}
+ */
+async postPackageDestination(data: {
+  destinationId: number;
+  packageId: number;
+  countryCode: string;
+  cityCode: string;
+  userId: number;
+  factsTypeId: number;
+  description: string;
+  status: boolean;
+  companyCode?: string;
+}) {
+  const payload = {
+    ...data,
+    companyCode: data.companyCode || this.cc,
+  };
+  const response = await apiClient.post('/Package/PostPackageDestination', payload);
+  return response.data;
+}
+
+/**
+ * Delete package destination
+ */
+async deletePackageDestination(destinationId: number) {
+  const response = await apiClient.post('/Package/DeletePackageDestination', {
+    destinationId,
+    companyCode: this.cc,
+  });
+  return response.data;
+}
+
+/**
+ * Upload destination image
+ * Endpoint: {api/Package/PostPackageDestinationImage}
+ */
+async postPackageDestinationImage(data: {
+  imageId: number;
+  destinationId: number;
+  packageId: number;
+  userId: number;
+  thumbnailImage: string;
+  bigImage: string;
+  imageTag: string;
+  status: boolean;
+  companyCode?: string;
+}) {
+  const payload = {
+    ...data,
+    companyCode: data.companyCode || this.cc,
+  };
+  const response = await apiClient.post('/Package/PostPackageDestinationImage', payload);
+  return response.data;
+}
+
+/**
+ * Delete destination image
+ */
+async deletePackageDestinationImage(imageId: number) {
+  const response = await apiClient.post('/Package/DeletePackageDestinationImage', {
+    imageId,
+    companyCode: this.cc,
+  });
+  return response.data;
+}
+
+// Hotel Mappings
+async getPackageHotelMappings(packageId: number): Promise<any> {
+  const response = await apiClient.get(
+    `/package/${packageId}/hotel-mappings`,
+    {
+      params: { userId: 1, companyCode: 'SMT' }
+    }
+  );
+  return response.data;
+}
+
+async postPackageHotelMapping(payload: any): Promise<any> {
+  const response = await apiClient.post('/package/hotel-mapping', payload);
+  return response.data;
+}
+
+async updatePackageHotelMappingImages(payload: any): Promise<any> {
+  const response = await apiClient.post('/package/hotel-mapping/images', payload);
+  return response.data;
+}
+
+async deletePackageHotelMapping(id: number): Promise<any> {
+  const response = await apiClient.delete(`/package/hotel-mapping/${id}`, {
+    params: { userId: 1, companyCode: 'SMT' }
   });
   return response.data;
 }
