@@ -1,3 +1,9 @@
+/**
+ * Package Service
+ * Centralized service for all package-related API calls
+ * Includes all master data management endpoints + existing endpoints
+ */
+
 import { apiClient } from '@/services/api/axios.instance';
 import type {
   PackageFormData, PackageListRequest, PackageListItem,
@@ -10,6 +16,10 @@ import { ApiResponse } from '@/types';
 
 class PackageService {
   private get cc() { return envConfig.tenant.companyCode; }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // EXISTING PACKAGE ENDPOINTS - PRESERVED
+  // ─────────────────────────────────────────────────────────────────────────────
 
   // ── READ ──────────────────────────────────────────────────────────────────
 
@@ -81,7 +91,7 @@ class PackageService {
     await apiClient.post('/Package/UpdateStatusAndTags', data);
   }
 
-  // ── DROPDOWNS ─────────────────────────────────────────────────────────────
+  // ── DROPDOWNS ─────────────────────────────────────────────────────────────────
 
   async getRegionList(): Promise<any[]> {
     const res = await apiClient.post<ApiResponse<any[]>>(
@@ -161,7 +171,9 @@ class PackageService {
     return res.data.data;
   }
 
-  // ── CRUD for admin pages (HolidayCategoryMaster, TabsType, FactsType) ────
+  // ─────────────────────────────────────────────────────────────────────────────
+  // EXISTING MASTER DATA ENDPOINTS - PRESERVED
+  // ─────────────────────────────────────────────────────────────────────────────
 
   async getHolidayCategoryTypeMappingList(): Promise<any[]> {
     const res = await apiClient.post<ApiResponse<any[]>>(
@@ -243,6 +255,9 @@ class PackageService {
     await apiClient.post('/Package/DeleteFactsType', { sNo: id, companyCode: this.cc });
   }
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PACKAGE IMAGE ENDPOINTS - PRESERVED
+  // ─────────────────────────────────────────────────────────────────────────────
 
   async changeImageFeature(id: number, actionType: string, packageId: number, userId: number): Promise<void> {
     const payload = {
@@ -256,7 +271,6 @@ class PackageService {
     await apiClient.post('/Package/ChangePackageImageFeature', payload);
   }
 
-
   async getPackageImages(id: number): Promise<any[]> {
     const res = await apiClient.post('/Package/GetPackageImages', { packageId: id, companyCode: this.cc });
     return res.data.data;
@@ -267,7 +281,6 @@ class PackageService {
     payload.companyCode = this.cc;
 
     for (const pair of Object.entries(payload)) {
-
       console.log(pair[0], pair[1]);
     }
 
@@ -279,274 +292,631 @@ class PackageService {
     return res.data;
   }
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PACKAGE ITINERARIES ENDPOINTS - PRESERVED
+  // ─────────────────────────────────────────────────────────────────────────────
+
   async getPackageItineraries(packageId: number, companyCode: string=this.cc) {
-  const response = await apiClient.post('/Package/GetPackageItineraries', {
-    packageId,
-    companyCode,
-  });
-  return response.data;
-}
+    const response = await apiClient.post('/Package/GetPackageItineraries', {
+      packageId,
+      companyCode,
+    });
+    return response.data;
+  }
 
-/**
- * Get package inclusions
- */
-async getPackageInclusions(packageId: number, companyCode: string= this.cc) {
-  const response = await apiClient.post('/Package/GetPackageInclusions', {
-    packageId,
-    companyCode,
-  });
-  return response.data;
-}
+  /**
+   * Get package inclusions
+   */
+  async getPackageInclusions(packageId: number, companyCode: string= this.cc) {
+    const response = await apiClient.post('/Package/GetPackageInclusions', {
+      packageId,
+      companyCode,
+    });
+    return response.data;
+  }
 
-/**
- * Create new itinerary day
- */
-async createPackageItinerary(data: any) {
-  data.companyCode = this.cc;
-  const response = await apiClient.post('/Package/PostPackageItinary', data);
-  return response.data;
-}
+  /**
+   * Create new itinerary day
+   */
+  async createPackageItinerary(data: any) {
+    data.companyCode = this.cc;
+    const response = await apiClient.post('/Package/PostPackageItinary', data);
+    return response.data;
+  }
 
-/**
- * Update existing itinerary day
- */
-async updatePackageItinerary(data: any) {
-  data.companyCode = this.cc;
-  const response = await apiClient.post('/Package/PostPackageItinary', data);
-  return response.data;
-}
+  /**
+   * Update existing itinerary day
+   */
+  async updatePackageItinerary(data: any) {
+    data.companyCode = this.cc;
+    const response = await apiClient.post('/Package/PostPackageItinary', data);
+    return response.data;
+  }
 
-/**
- * Delete itinerary day
- */
-async deletePackageItinerary(packageItineraryId: number) {
-  const response = await apiClient.post('/Package/DeleteItinerary', {
-    packageItineraryId,
-  });
-  return response.data;
-}
+  /**
+   * Delete itinerary day
+   */
+  async deletePackageItinerary(packageItineraryId: number) {
+    const response = await apiClient.post('/Package/DeleteItinerary', {
+      packageItineraryId,
+    });
+    return response.data;
+  }
 
-/**
- * Upload images for itinerary day
- */
-async uploadItineraryImages(formData: FormData) {
-  const response = await apiClient.post('/Package/UploadItineraryImages', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
-}
+  /**
+   * Upload images for itinerary day
+   */
+  async uploadItineraryImages(formData: FormData) {
+    const response = await apiClient.post('/Package/UploadItineraryImages', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
 
-/**
- * Delete itinerary image
- */
-async deleteItineraryImage(imageId: number) {
-  const response = await apiClient.post('/Package/DeleteItineraryImage', {
-    imageId,
-  });
-  return response.data;
-}
+  /**
+   * Delete itinerary image
+   */
+  async deleteItineraryImage(imageId: number) {
+    const response = await apiClient.post('/Package/DeleteItineraryImage', {
+      imageId,
+    });
+    return response.data;
+  }
 
-/**
- * Add package inclusion
- */
-async createPackageInclusion(data: {
-  packageInclusionId: number;
-  packageId: number;
-  specType: number;
-  userId: number;
-  description: string;
-  sequenceNo: number;
-  status: number;
-}) {
-  const response = await apiClient.post('/Package/PostPackageInclusion', data);
-  return response.data;
-}
+  /**
+   * Add package inclusion
+   */
+  async createPackageInclusion(data: {
+    packageInclusionId: number;
+    packageId: number;
+    specType: number;
+    userId: number;
+    description: string;
+    sequenceNo: number;
+    status: number;
+  }) {
+    const response = await apiClient.post('/Package/PostPackageInclusion', data);
+    return response.data;
+  }
 
-/**
- * Get package inclusions
- */
-async getPackageInclusionsList(packageId: number) {
-  const response = await apiClient.post('/Package/GetPackageInclusions', {
-    packageId,
-    companyCode: this.cc,
-  });
-  return response.data?.data || [];
-}
+  /**
+   * Get package inclusions
+   */
+  async getPackageInclusionsList(packageId: number) {
+    const response = await apiClient.post('/Package/GetPackageInclusions', {
+      packageId,
+      companyCode: this.cc,
+    });
+    return response.data?.data || [];
+  }
 
-async uploadItineraryImage(data: {
-  imageId: number;
-  packageItineraryId: number;
-  userId: number;
-  thumbnailImage: string;
-  bigImage: string;
-  imageTag: string;
-  status: boolean;
-  companyCode: string;
-}) {
-  const response = await apiClient.post('/Package/PostPackageItineraryImage', data);
-  return response.data;
-}
+  async uploadItineraryImage(data: {
+    imageId: number;
+    packageItineraryId: number;
+    userId: number;
+    thumbnailImage: string;
+    bigImage: string;
+    imageTag: string;
+    status: boolean;
+    companyCode: string;
+  }) {
+    const response = await apiClient.post('/Package/PostPackageItineraryImage', data);
+    return response.data;
+  }
 
-/**
- * Update inclusion
- */
-async updateInclusion(data: {
-  id: number;
-  description: string;
-  isActive: boolean;
-  companyCode: string;
-}) {
-  const response = await apiClient.post('/Package/UpdateInclusion', data);
-  return response.data;
-}
+  /**
+   * Update inclusion
+   */
+  async updateInclusion(data: {
+    id: number;
+    description: string;
+    isActive: boolean;
+    companyCode: string;
+  }) {
+    const response = await apiClient.post('/Package/UpdateInclusion', data);
+    return response.data;
+  }
 
-/**
- * Update exclusion
- */
-async updateExclusion(data: {
-  id: number;
-  description: string;
-  isActive: boolean;
-  companyCode: string;
-}) {
-  const response = await apiClient.post('/Package/UpdateExclusion', data);
-  return response.data;
-}
+  /**
+   * Update exclusion
+   */
+  async updateExclusion(data: {
+    id: number;
+    description: string;
+    isActive: boolean;
+    companyCode: string;
+  }) {
+    const response = await apiClient.post('/Package/UpdateExclusion', data);
+    return response.data;
+  }
 
-/**
- * Delete inclusion
- */
-async deleteInclusion(id: number) {
-  const response = await apiClient.post('/Package/DeleteInclusion', { id });
-  return response.data;
-}
+  /**
+   * Delete inclusion
+   */
+  async deleteInclusion(id: number) {
+    const response = await apiClient.post('/Package/DeleteInclusion', { id });
+    return response.data;
+  }
 
-/**
- * Delete exclusion
- */
-async deleteExclusion(id: number) {
-  const response = await apiClient.post('/Package/DeleteExclusion', { id });
-  return response.data;
-}
+  /**
+   * Delete exclusion
+   */
+  async deleteExclusion(id: number) {
+    const response = await apiClient.post('/Package/DeleteExclusion', { id });
+    return response.data;
+  }
 
-async getPackageTabList(holidayTypeCodes: string, companyCode: string = this.cc) {
-  const response = await apiClient.post('/Package/PackageTabList', {
-    holidayTypeCodes,
-    companyCode,
-  });
-  return response.data;
-}
+  async getPackageTabList(holidayTypeCodes: string, companyCode: string = this.cc) {
+    const response = await apiClient.post('/Package/PackageTabList', {
+      holidayTypeCodes,
+      companyCode,
+    });
+    return response.data;
+  }
 
-/**
- * Get package destinations with images
- * Endpoint: {api/Package/PackageDestination}
- */
-async getPackageDestination(packageId: string | number, companyCode: string = this.cc) {
-  const response = await apiClient.post('/Package/PackageDestination', {
-    packageId,
-    companyCode,
-  });
-  return response.data;
-}
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PACKAGE DESTINATION ENDPOINTS - PRESERVED
+  // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Create or update package destination
- * Endpoint: {api/Package/PostPackageDestination}
- */
-async postPackageDestination(data: {
-  destinationId: number;
-  packageId: number;
-  countryCode: string;
-  cityCode: string;
-  userId: number;
-  factsTypeId: number;
-  description: string;
-  status: boolean;
-  companyCode?: string;
-}) {
-  const payload = {
-    ...data,
-    companyCode: data.companyCode || this.cc,
-  };
-  const response = await apiClient.post('/Package/PostPackageDestination', payload);
-  return response.data;
-}
+  /**
+   * Get package destinations with images
+   * Endpoint: {api/Package/PackageDestination}
+   */
+  async getPackageDestination(packageId: string | number, companyCode: string = this.cc) {
+    const response = await apiClient.post('/Package/PackageDestination', {
+      packageId,
+      companyCode,
+    });
+    return response.data;
+  }
 
-/**
- * Delete package destination
- */
-async deletePackageDestination(destinationId: number) {
-  const response = await apiClient.post('/Package/DeletePackageDestination', {
-    destinationId,
-    companyCode: this.cc,
-  });
-  return response.data;
-}
+  /**
+   * Create or update package destination
+   * Endpoint: {api/Package/PostPackageDestination}
+   */
+  async postPackageDestination(data: {
+    destinationId: number;
+    packageId: number;
+    countryCode: string;
+    cityCode: string;
+    userId: number;
+    factsTypeId: number;
+    description: string;
+    status: boolean;
+    companyCode?: string;
+  }) {
+    const payload = {
+      ...data,
+      companyCode: data.companyCode || this.cc,
+    };
+    const response = await apiClient.post('/Package/PostPackageDestination', payload);
+    return response.data;
+  }
 
-/**
- * Upload destination image
- * Endpoint: {api/Package/PostPackageDestinationImage}
- */
-async postPackageDestinationImage(data: {
-  imageId: number;
-  destinationId: number;
-  packageId: number;
-  userId: number;
-  thumbnailImage: string;
-  bigImage: string;
-  imageTag: string;
-  status: boolean;
-  companyCode?: string;
-}) {
-  const payload = {
-    ...data,
-    companyCode: data.companyCode || this.cc,
-  };
-  const response = await apiClient.post('/Package/PostPackageDestinationImage', payload);
-  return response.data;
-}
+  /**
+   * Delete package destination
+   */
+  async deletePackageDestination(destinationId: number) {
+    const response = await apiClient.post('/Package/DeletePackageDestination', {
+      destinationId,
+      companyCode: this.cc,
+    });
+    return response.data;
+  }
 
-/**
- * Delete destination image
- */
-async deletePackageDestinationImage(imageId: number) {
-  const response = await apiClient.post('/Package/DeletePackageDestinationImage', {
-    imageId,
-    companyCode: this.cc,
-  });
-  return response.data;
-}
+  /**
+   * Upload destination image
+   * Endpoint: {api/Package/PostPackageDestinationImage}
+   */
+  async postPackageDestinationImage(data: {
+    imageId: number;
+    destinationId: number;
+    packageId: number;
+    userId: number;
+    thumbnailImage: string;
+    bigImage: string;
+    imageTag: string;
+    status: boolean;
+    companyCode?: string;
+  }) {
+    const payload = {
+      ...data,
+      companyCode: data.companyCode || this.cc,
+    };
+    const response = await apiClient.post('/Package/PostPackageDestinationImage', payload);
+    return response.data;
+  }
 
-// Hotel Mappings
-async getPackageHotelMappings(packageId: number): Promise<any> {
-  const response = await apiClient.get(
-    `/package/${packageId}/hotel-mappings`,
-    {
+  /**
+   * Delete destination image
+   */
+  async deletePackageDestinationImage(imageId: number) {
+    const response = await apiClient.post('/Package/DeletePackageDestinationImage', {
+      imageId,
+      companyCode: this.cc,
+    });
+    return response.data;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // HOTEL ENDPOINTS - PRESERVED
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  async getPackageHotelMappings(packageId: number): Promise<any> {
+    const response = await apiClient.get(
+      `/package/${packageId}/hotel-mappings`,
+      {
+        params: { userId: 1, companyCode: 'SMT' }
+      }
+    );
+    return response.data;
+  }
+
+  async postPackageHotelMapping(payload: any): Promise<any> {
+    const response = await apiClient.post('/package/hotel-mapping', payload);
+    return response.data;
+  }
+
+  async updatePackageHotelMappingImages(payload: any): Promise<any> {
+    const response = await apiClient.post('/package/hotel-mapping/images', payload);
+    return response.data;
+  }
+
+  async deletePackageHotelMapping(id: number): Promise<any> {
+    const response = await apiClient.delete(`/package/hotel-mapping/${id}`, {
       params: { userId: 1, companyCode: 'SMT' }
+    });
+    return response.data;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // NEW MASTER DATA ENDPOINTS - ALL 9 MASTERS COMPLETE CRUD
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // ──────────────────── HOLIDAY TYPE MASTER ─────────────────────
+
+  async createHolidayType(payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+    };
+    const response = await apiClient.post('/Package/CreateHolidayType', data);
+    return response?.data;
+  }
+
+  async updateHolidayType(id: number | string, payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+      holidayTypeId: id,
+    };
+    const response = await apiClient.post('/Package/UpdateHolidayType', data);
+    return response?.data;
+  }
+
+  async deleteHolidayType(id: number | string): Promise<void> {
+    await apiClient.post('/Package/DeleteHolidayType', {
+      companyCode: this.cc,
+      holidayTypeId: id,
+    });
+  }
+
+  // ──────────────────── TOUR TYPE MASTER ─────────────────────
+
+  async getTourTypeList(): Promise<any[]> {
+    try {
+      const response = await apiClient.post('/Package/GetTourTypeList', {
+        companyCode: this.cc,
+      });
+      return response?.data || [];
+    } catch (error) {
+      console.warn('Failed to fetch TourTypeList, returning empty array:', error);
+      return [];
     }
-  );
-  return response.data;
-}
+  }
 
-async postPackageHotelMapping(payload: any): Promise<any> {
-  const response = await apiClient.post('/package/hotel-mapping', payload);
-  return response.data;
-}
+  async createTourType(payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+    };
+    const response = await apiClient.post('/Package/CreateTourType', data);
+    return response?.data;
+  }
 
-async updatePackageHotelMappingImages(payload: any): Promise<any> {
-  const response = await apiClient.post('/package/hotel-mapping/images', payload);
-  return response.data;
-}
+  async updateTourType(id: number | string, payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+      tourTypeId: id,
+    };
+    const response = await apiClient.post('/Package/UpdateTourType', data);
+    return response?.data;
+  }
 
-async deletePackageHotelMapping(id: number): Promise<any> {
-  const response = await apiClient.delete(`/package/hotel-mapping/${id}`, {
-    params: { userId: 1, companyCode: 'SMT' }
-  });
-  return response.data;
-}
+  async deleteTourType(id: number | string): Promise<void> {
+    await apiClient.post('/Package/DeleteTourType', {
+      companyCode: this.cc,
+      tourTypeId: id,
+    });
+  }
 
+  // ──────────────────── MARKET MASTER ─────────────────────
+
+  async createMarket(payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+    };
+    const response = await apiClient.post('/Package/CreateMarket', data);
+    return response?.data;
+  }
+
+  async updateMarket(id: number | string, payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+      marketId: id,
+    };
+    const response = await apiClient.post('/Package/UpdateMarket', data);
+    return response?.data;
+  }
+
+  async deleteMarket(id: number | string): Promise<void> {
+    await apiClient.post('/Package/DeleteMarket', {
+      companyCode: this.cc,
+      marketId: id,
+    });
+  }
+
+  // ──────────────────── REGION MASTER ─────────────────────
+
+  async createRegion(payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+    };
+    const response = await apiClient.post('/Package/CreateRegion', data);
+    return response?.data;
+  }
+
+  async updateRegion(id: number | string, payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+      regionId: id,
+    };
+    const response = await apiClient.post('/Package/UpdateRegion', data);
+    return response?.data;
+  }
+
+  async deleteRegion(id: number | string): Promise<void> {
+    await apiClient.post('/Package/DeleteRegion', {
+      companyCode: this.cc,
+      regionId: id,
+    });
+  }
+
+  // ──────────────────── PACKAGE CATEGORY MASTER ─────────────────────
+
+  async getPackageCategoryList(): Promise<any[]> {
+    try {
+      const response = await apiClient.post('/Common/GetPackageCategory', {
+        companyCode: this.cc,
+      });
+      return response?.data?.data || response?.data || [];
+    } catch (error) {
+      console.warn('Failed to fetch PackageCategoryList, returning empty array:', error);
+      return [];
+    }
+  }
+
+  async createPackageCategory(payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+    };
+    const response = await apiClient.post('/Package/CreatePackageCategory', data);
+    return response?.data;
+  }
+
+  async updatePackageCategory(id: number | string, payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+      packageCategoryId: id,
+    };
+    const response = await apiClient.post('/Package/UpdatePackageCategory', data);
+    return response?.data;
+  }
+
+  async deletePackageCategory(id: number | string): Promise<void> {
+    await apiClient.post('/Package/DeletePackageCategory', {
+      companyCode: this.cc,
+      packageCategoryId: id,
+    });
+  }
+
+  // ──────────────────── DEPARTURE CITY MASTER ─────────────────────
+
+  async getDepartureCityList(): Promise<any[]> {
+    const response = await apiClient.post('/Package/GetDepartureCityList', {
+      companyCode: this.cc,
+    });
+    return response?.data || [];
+  }
+
+  async createDepartureCity(payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+    };
+    const response = await apiClient.post('/Package/CreateDepartureCity', data);
+    return response?.data;
+  }
+
+  async updateDepartureCity(id: number | string, payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+      cityId: id,
+    };
+    const response = await apiClient.post('/Package/UpdateDepartureCity', data);
+    return response?.data;
+  }
+
+  async deleteDepartureCity(id: number | string): Promise<void> {
+    await apiClient.post('/Package/DeleteDepartureCity', {
+      companyCode: this.cc,
+      cityId: id,
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // HOTEL CATEGORY & MASTER ENDPOINTS - FROM API DOC
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get package hotel category list dropdown
+   */
+  async getPackageHotelCategory(): Promise<any[]> {
+    try {
+      const response = await apiClient.post('/Common/PackageHotelCategory', {
+        companyCode: this.cc,
+      });
+      return response?.data || [];
+    } catch (error) {
+      console.warn('Failed to fetch PackageHotelCategory, returning empty array:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Post package hotel master
+   */
+  async postPackageHotelMaster(payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+    };
+    const response = await apiClient.post('/Common/PostPackageHotelMaster', data);
+    return response?.data;
+  }
+
+  /**
+   * Get package hotel master
+   */
+  async getPackageHotelMaster(): Promise<any[]> {
+    try {
+      const response = await apiClient.post('/Common/PackageHotelMaster', {
+        companyCode: this.cc,
+      });
+      return response?.data || [];
+    } catch (error) {
+      console.warn('Failed to fetch PackageHotelMaster, returning empty array:', error);
+      return [];
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PACKAGE COSTING ENDPOINTS - FROM API DOC
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get package costing
+   */
+  async getPackageCosting(packageId: number): Promise<any[]> {
+    try {
+      const response = await apiClient.post('/Package/GetPackageCosting', {
+        packageId,
+        companyCode: this.cc,
+      });
+      return response?.data || [];
+    } catch (error) {
+      console.warn('Failed to fetch PackageCosting, returning empty array:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Post package costing
+   */
+  async postPackageCosting(payload: any): Promise<any> {
+    const data = {
+      ...payload,
+      companyCode: this.cc,
+    };
+    const response = await apiClient.post('/Package/PostPackageCosting', data);
+    return response?.data;
+  }
+
+  /**
+   * Delete package costing entry
+   */
+  async deletePackageCosting(packageValidityId: number): Promise<void> {
+    await apiClient.post('/Package/DeletePackageCosting', {
+      companyCode: this.cc,
+      packageValidityId,
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PACKAGE CITIES ENDPOINTS - FROM API DOC
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get package destination cities list
+   */
+  async getPackageCities(countryCodes: string): Promise<any[]> {
+    try {
+      const response = await apiClient.post('/Package/PackageCities', {
+        countryCodes,
+        companyCode: this.cc,
+      });
+      return response?.data || [];
+    } catch (error) {
+      console.warn('Failed to fetch PackageCities, returning empty array:', error);
+      return [];
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // DESTINATION FACT & CITIES LIST ENDPOINTS - FROM API DOC
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Get destination fact list dropdown
+   */
+  async getDestinationFactList(packageId: number): Promise<any[]> {
+    try {
+      const response = await apiClient.post('/Package/DestinationFactList', {
+        packageId,
+        companyCode: this.cc,
+      });
+      return response?.data || [];
+    } catch (error) {
+      console.warn('Failed to fetch DestinationFactList, returning empty array:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get destination cities list dropdown
+   */
+  async getPackageDestinationCities(packageId: number): Promise<any[]> {
+    try {
+      const response = await apiClient.post('/Package/PackageDestinationCities', {
+        packageId,
+        companyCode: this.cc,
+      });
+      return response?.data || [];
+    } catch (error) {
+      console.warn('Failed to fetch PackageDestinationCities, returning empty array:', error);
+      return [];
+    }
+  }
 }
 
 export const packageService = new PackageService();

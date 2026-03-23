@@ -49,13 +49,63 @@ interface Step4Props {
   onValidationChange?: (isValid: boolean) => void;
 }
 
+/**
+ * API Response type - direct from backend
+ */
+interface ApiPackageImage {
+  imageId: number;
+  packageId: number;
+  thumbnail: string;
+  bigImage: string;
+  imageTag: string;
+  imageType: string; // "0" or "1"
+  isDefaultImage: boolean;
+  status: boolean;
+}
+
+/**
+ * Internal type - normalized from API
+ */
+interface SavedPackageImage {
+  imageId: number;
+  packageId: number;
+  thumbnailUrl: string;
+  largeImageUrl: string;
+  tag: string;
+  imageType: number; // 0 = Package, 1 = Destination, 2 = Hotel
+  isDefaultImage: boolean;
+  status: boolean;
+}
+
 // ── Helper Functions ──────────────────────────────────────────────────────
 
-const normalizeUrl = (url: string | null): string | null => {
-  return url ? url.replace(/\\/g, '/') : null;
+/**
+ * Normalize API URLs - replace backslashes with forward slashes
+ */
+const normalizeUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  return url.replace(/\\/g, '/');
 };
 
-// Utility: Convert File to Base64
+/**
+ * Map API response to internal SavedPackageImage type
+ */
+const mapApiResponseToImage = (apiImage: ApiPackageImage): SavedPackageImage => {
+  return {
+    imageId: apiImage.imageId,
+    packageId: apiImage.packageId,
+    thumbnailUrl: normalizeUrl(apiImage.thumbnail),
+    largeImageUrl: normalizeUrl(apiImage.bigImage),
+    tag: apiImage.imageTag || '',
+    imageType: parseInt(apiImage.imageType, 10) || 0, // Convert string to number
+    isDefaultImage: apiImage.isDefaultImage,
+    status: apiImage.status,
+  };
+};
+
+/**
+ * Convert File to Base64
+ */
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -67,28 +117,59 @@ const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
-// Helper: Get image type label
-const getImageTypeLabel = (type: number) => {
-  return type === 0 ? 'Default' : 'Virtual Tour';
+/**
+ * Get image type label
+ */
+const getImageTypeLabel = (isDefault: boolean): string => {
+  return isDefault ? 'Default' : 'Virtual Tour';
 };
 
-// Helper: Get image category label
-const getImageCategoryLabel = (type: number) => {
-  if (type === 0) return 'Package';
-  if (type === 1) return 'Destination';
-  if (type === 2) return 'Hotel';
-  return 'Unknown';
+/**
+ * Get image category label from imageType
+ * 0 = Package, 1 = Destination, 2 = Hotel
+ */
+const getImageCategoryLabel = (imageType: number): string => {
+  switch (imageType) {
+    case 0:
+      return 'Package';
+    case 1:
+      return 'Destination';
+    case 2:
+      return 'Hotel';
+    default:
+      return 'Unknown';
+  }
 };
 
-// Define SavedPackageImage type inline above component if not found:
-type SavedPackageImage = {
-  imageId: number;
-  isDefaultImage: boolean;
-  imageType: number;
-  thumbnailUrl?: string;
-  largeImageUrl?: string;
-  tag?: string;
-  status?: string;
+/**
+ * Convert numeric imageType to category string
+ */
+const imageCategoryValueToString = (imageType: number): string => {
+  switch (imageType) {
+    case 0:
+      return 'package';
+    case 1:
+      return 'destination';
+    case 2:
+      return 'hotel';
+    default:
+      return 'package';
+  }
+};
+
+/**
+ * Convert category string to numeric imageType
+ */
+const imageCategoryStringToValue = (category: string): number => {
+  switch (category) {
+    case 'destination':
+      return 1;
+    case 'hotel':
+      return 2;
+    case 'package':
+    default:
+      return 0;
+  }
 };
 
 // ── Main Component ────────────────────────────────────────────────────────
@@ -97,26 +178,26 @@ const Step4UploadImages: React.FC<Step4Props> = ({
   packageId,
   onValidationChange,
 }) => {
-    // State
-    const [savedImages, setSavedImages] = useState<SavedPackageImage[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{
-      open: boolean;
-      imageId: number | null;
-    }>({ open: false, imageId: null });
+  // State
+  const [savedImages, setSavedImages] = useState<SavedPackageImage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    open: boolean;
+    imageId: number | null;
+  }>({ open: false, imageId: null });
 
-    // Form fields (applied to all rows)
-    const [imageType, setImageType] = useState<'default' | 'virtualTour'>('default');
-    const [imageCategory, setImageCategory] = useState<string>('package');
+  // Form fields (applied to all rows)
+  const [imageType, setImageType] = useState<'default' | 'virtualTour'>('default');
+  const [imageCategory, setImageCategory] = useState<string>('package');
 
-    // Key to force BatchImageUploader re-mount with initial row
-    const [uploaderKey, setUploaderKey] = useState(0);
+  // Key to force BatchImageUploader re-mount
+  const [uploaderKey, setUploaderKey] = useState(0);
 
-    // Edit state
-    const [editingImage, setEditingImage] = useState<SavedPackageImage | null>(null);
+  // Edit state
+  const [editingImage, setEditingImage] = useState<SavedPackageImage | null>(null);
 
   // Effects
   useEffect(() => {
@@ -135,21 +216,35 @@ const Step4UploadImages: React.FC<Step4Props> = ({
     }
   }, [success]);
 
-  // Load Images
+  // ────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Load images from API and normalize response
+   */
   const loadSavedImages = async () => {
     if (!packageId) return;
     setIsLoading(true);
     try {
-      const images = await packageService.getPackageImages(packageId);
-      setSavedImages(images);
+      const apiImages = await packageService.getPackageImages(packageId);
+      
+      // Map API response to internal format
+      const normalizedImages = apiImages.map((img: ApiPackageImage) => 
+        mapApiResponseToImage(img)
+      );
+      
+      setSavedImages(normalizedImages);
+      setError(null);
     } catch (err: any) {
       setError('Failed to load images');
+      setSavedImages([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Open Modal
+  /**
+   * Open Add Images Modal
+   */
   const openModal = () => {
     setEditingImage(null);
     setImageType('default');
@@ -158,19 +253,23 @@ const Step4UploadImages: React.FC<Step4Props> = ({
     setModalOpen(true);
   };
 
-  // Open Edit Modal
+  /**
+   * Open Edit Images Modal with pre-filled data
+   */
   const openEditModal = (image: SavedPackageImage) => {
     setEditingImage(image);
+    
+    // Set form fields based on image data
     setImageType(image.isDefaultImage ? 'default' : 'virtualTour');
-    setImageCategory(
-      image.imageType === 0 ? 'package' :
-      image.imageType === 1 ? 'destination' : 'hotel'
-    );
+    setImageCategory(imageCategoryValueToString(image.imageType));
+    
     setUploaderKey(prev => prev + 1);
     setModalOpen(true);
   };
 
-  // Close Modal
+  /**
+   * Close Modal
+   */
   const closeModal = () => {
     setModalOpen(false);
     setImageType('default');
@@ -178,46 +277,56 @@ const Step4UploadImages: React.FC<Step4Props> = ({
     setEditingImage(null);
   };
 
-  // Batch Upload Handler
+  /**
+   * Handle batch upload
+   */
   const handleBatchUpload = async (row: ImageRow) => {
-    // In edit mode, allow either a file or a URL for each image
     const isEdit = !!editingImage;
     const hasThumbnail = row.thumbnailFile || row.thumbnailUrl;
     const hasLarge = row.largeFile || row.largeImageUrl;
+    
     if (!isEdit && (!hasThumbnail || !hasLarge)) {
-      throw new Error('Both images are required');
+      throw new Error('Both thumbnail and large images are required');
     }
 
-    const thumbnailBase64 = row.thumbnailFile ? await fileToBase64(row.thumbnailFile) : '';
-    const largeBase64 = row.largeFile ? await fileToBase64(row.largeFile) : '';
+    try {
+      const thumbnailBase64 = row.thumbnailFile ? await fileToBase64(row.thumbnailFile) : '';
+      const largeBase64 = row.largeFile ? await fileToBase64(row.largeFile) : '';
 
-    const payload = {
-      packageId,
-      imageId: editingImage ? editingImage.imageId : 0,
-      userId: 0,
-      thumbnailImage: thumbnailBase64,
-      bigImage: largeBase64,
-      imageTag: row.tag,
-      imageType: imageType === 'default' ? 0 : 1, // Use form field
-      status: row.status === 'Active',
-      actionType: editingImage ? 'Update' : 'Insert',
-    };
+      const payload = {
+        packageId,
+        imageId: editingImage ? editingImage.imageId : 0,
+        userId: 0,
+        thumbnailImage: thumbnailBase64,
+        bigImage: largeBase64,
+        imageTag: row.tag || '',
+        imageType: imageCategoryStringToValue(imageCategory), // Convert category to number
+        status: row.status === 'Active',
+        companyCode: '', // Will be added by service
+      };
 
-    await packageService.uploadImages(payload);
+      await packageService.uploadImages(payload);
+    } catch (err: any) {
+      throw err;
+    }
   };
 
+  /**
+   * Handle batch upload completion
+   */
   const handleBatchComplete = async (rows: ImageRow[]) => {
-    // Only show success if all rows are valid and uploaded
     try {
       await loadSavedImages();
-      setSuccess(`Successfully uploaded ${rows.length} images!`);
+      setSuccess(`Successfully ${editingImage ? 'updated' : 'uploaded'} ${rows.length} image(s)!`);
       closeModal();
     } catch (err) {
       setError('Some images failed to upload. Please check and try again.');
     }
   };
 
-  // Delete Handler
+  /**
+   * Delete image handler
+   */
   const handleDelete = async (imageId: number) => {
     try {
       await packageService.changeImageFeature(imageId, 'DELETE', packageId, 0);
@@ -229,7 +338,10 @@ const Step4UploadImages: React.FC<Step4Props> = ({
     }
   };
 
+  // ────────────────────────────────────────────────────────────────────────
   // Render
+  // ────────────────────────────────────────────────────────────────────────
+
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
@@ -251,9 +363,11 @@ const Step4UploadImages: React.FC<Step4Props> = ({
           {success}
         </Alert>
       )}
-      {/* Main Grid */}
+
+      {/* Main Card */}
       <Card sx={{ boxShadow: 'none', border: '1px solid #e5e7eb' }}>
         <CardContent>
+          {/* Header */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
@@ -293,8 +407,10 @@ const Step4UploadImages: React.FC<Step4Props> = ({
               Add Images
             </Button>
           </Box>
+
           <Divider sx={{ mb: 2 }} />
 
+          {/* Empty State */}
           {savedImages.length === 0 ? (
             <Box
               sx={{
@@ -327,6 +443,7 @@ const Step4UploadImages: React.FC<Step4Props> = ({
               </Button>
             </Box>
           ) : (
+            /* Images Table */
             <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
               <Table size="small">
                 <TableHead>
@@ -351,16 +468,18 @@ const Step4UploadImages: React.FC<Step4Props> = ({
                       </TableCell>
                       <TableCell>
                         <Avatar
-                          src={normalizeUrl(image.thumbnailUrl ?? null) || ''}
+                          src={image.thumbnailUrl}
                           variant="rounded"
                           sx={{ width: 52, height: 38 }}
+                          alt={`Thumbnail ${idx + 1}`}
                         />
                       </TableCell>
                       <TableCell>
                         <Avatar
-                          src={normalizeUrl(image.largeImageUrl ?? null) || ''}
+                          src={image.largeImageUrl}
                           variant="rounded"
                           sx={{ width: 52, height: 38 }}
+                          alt={`Large image ${idx + 1}`}
                         />
                       </TableCell>
                       <TableCell sx={{ fontSize: '0.8125rem' }}>
@@ -368,7 +487,7 @@ const Step4UploadImages: React.FC<Step4Props> = ({
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={getImageTypeLabel(image.isDefaultImage ? 0 : 1)}
+                          label={getImageTypeLabel(image.isDefaultImage)}
                           size="small"
                           sx={{
                             fontSize: '0.75rem',
@@ -389,6 +508,7 @@ const Step4UploadImages: React.FC<Step4Props> = ({
                           label={image.status ? 'Active' : 'Inactive'}
                           size="small"
                           color={image.status ? 'success' : 'default'}
+                          variant="outlined"
                           sx={{ fontSize: '0.75rem' }}
                         />
                       </TableCell>
@@ -398,6 +518,7 @@ const Step4UploadImages: React.FC<Step4Props> = ({
                           color="primary"
                           onClick={() => openEditModal(image)}
                           sx={{ mr: 0.5 }}
+                          title="Edit"
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
@@ -407,6 +528,7 @@ const Step4UploadImages: React.FC<Step4Props> = ({
                           onClick={() =>
                             setDeleteConfirmation({ open: true, imageId: image.imageId })
                           }
+                          title="Delete"
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
@@ -420,7 +542,7 @@ const Step4UploadImages: React.FC<Step4Props> = ({
         </CardContent>
       </Card>
 
-      {/* Add Images Modal with Form Controls + BatchImageUploader */}
+      {/* Modal: Upload Images */}
       <FormModal
         open={modalOpen}
         onClose={closeModal}
@@ -433,15 +555,15 @@ const Step4UploadImages: React.FC<Step4Props> = ({
         maxWidth="lg"
       >
         {/* Form Controls Section */}
-        <Card sx={{ mb: 1, bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
+        <Card sx={{ mb: 2, bgcolor: '#f8fafc', border: '1px solid #e5e7eb' }}>
           <CardContent>
-             <Grid container spacing={3}>
-              {/* Type Selection */}
+            <Grid container spacing={3}>
+              {/* Type Selection (Default vs Virtual Tour) */}
               <Grid item xs={12} md={6}>
                 <FormControl component="fieldset" fullWidth>
-                  {/* <FormLabel sx={{ fontSize: '0.8125rem', fontWeight: 600, mb: 1, color: '#374151' }}>
-                    Type *
-                  </FormLabel> */}
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5, color: '#374151' }}>
+                    Image Type
+                  </Typography>
                   <RadioGroup
                     row
                     value={imageType}
@@ -461,7 +583,7 @@ const Step4UploadImages: React.FC<Step4Props> = ({
                 </FormControl>
               </Grid>
 
-              {/* Category Selection */}
+              {/* Category Selection (Package, Destination, Hotel) */}
               <Grid item xs={12} md={6}>
                 <TextField
                   select
@@ -482,11 +604,11 @@ const Step4UploadImages: React.FC<Step4Props> = ({
                   <MenuItem value="hotel">Hotel</MenuItem>
                 </TextField>
               </Grid>
-            </Grid>            
+            </Grid>
           </CardContent>
         </Card>
 
-        {/* Batch Image Uploader Section */}
+        {/* Batch Image Uploader */}
         <Box>
           <BatchImageUploader
             key={uploaderKey}
@@ -498,16 +620,16 @@ const Step4UploadImages: React.FC<Step4Props> = ({
             initialRows={editingImage ? [{
               thumbnailFile: null,
               largeFile: null,
-              tag: editingImage.tag || '',
+              tag: editingImage.tag,
               status: editingImage.status ? 'Active' : 'Inactive',
-              thumbnailUrl: editingImage.thumbnailUrl || '',
-              largeImageUrl: editingImage.largeImageUrl || '',
+              thumbnailUrl: editingImage.thumbnailUrl,
+              largeImageUrl: editingImage.largeImageUrl,
             }] : undefined}
           />
         </Box>
       </FormModal>
 
-      {/* Delete Confirmation */}
+      {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteConfirmation.open}
         onClose={() => setDeleteConfirmation({ open: false, imageId: null })}

@@ -44,8 +44,15 @@ const CreatePackage = Loadable(React.lazy(() => import('@/pages/package/CreatePa
 const HolidayCategoryTypeMapping = Loadable(React.lazy(() => import('@/pages/package/HolidayCategoryTypeMapping')));
 const TabsType = Loadable(React.lazy(() => import('@/pages/package/TabsType')));
 const FactsType = Loadable(React.lazy(() => import('@/pages/package/FactsType')));
-const HolidayCategoryMaster = Loadable(React.lazy(() => import('@/pages/package/HolidayCategoryMaster')));
-
+const HolidayCategoryMaster = Loadable(React.lazy(() => import('@/pages/package/PackageMaster/HolidayCategoryMasterPage')));
+const FactsTypeMasterPage = Loadable(React.lazy(() => import('@/pages/package/PackageMaster/FactsTypeMasterPage')));
+const DeparturecityMasterPage = Loadable(React.lazy(() => import('@/pages/package/PackageMaster/DeparturecityMasterPage')));
+const MarketMasterPage = Loadable(React.lazy(() => import('@/pages/package/PackageMaster/Marketmaster')));
+const PackageCategoryMasterPage = Loadable(React.lazy(() => import('@/pages/package/PackageMaster/Packagecategorymaster')));
+const RegionMasterPage = Loadable(React.lazy(() => import('@/pages/package/PackageMaster/Regionmaster')));
+const Step7HotelMapping = Loadable(React.lazy(() => import('@/pages/package/PackageMaster/Step7HotelMapping')));
+const TourTypeMasterPage = Loadable(React.lazy(() => import('@/pages/package/PackageMaster/TourTypeMaster')));
+const HolidayTypeMasterPage = Loadable(React.lazy(() => import('@/pages/package/PackageMaster/HolidayTypeMasterPage')));
 export const routes: RouteObject[] = [
   {
     path: '/',
@@ -154,7 +161,20 @@ export const routes: RouteObject[] = [
               { path: 'holiday-category-type-mapping', element: <HolidayCategoryTypeMapping /> },
               { path: 'tabs-type', element: <TabsType /> },
               { path: 'facts-type', element: <FactsType /> },
-              { path: 'holiday-category-master', element: <HolidayCategoryMaster /> },
+              {
+                path: 'master',
+                children: [
+                  { path: 'holiday-category-master', element: <HolidayCategoryMaster /> },
+                  { path: 'facts-type-master', element: <FactsTypeMasterPage /> },
+                  { path: 'departure-city-master', element: <DeparturecityMasterPage /> },
+                  { path: 'market-master', element: <MarketMasterPage /> },
+                  { path: 'package-category-master', element: <PackageCategoryMasterPage /> },
+                  { path: 'region-master', element: <RegionMasterPage /> },
+                  { path: 'hotel-mapping-master', element: <Step7HotelMapping /> },
+                  { path: 'tour-type-master', element: <TourTypeMasterPage /> },
+                  { path: 'holiday-type-master', element: <HolidayTypeMasterPage /> },
+                ],
+              },
             ],
           },
           {

@@ -1,6 +1,6 @@
 .moduleLayout {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #f8fafc;
 }
 
 .container {
@@ -12,23 +12,26 @@
   flex-grow: 1;
   width: 100%;
   margin-left: 0;
-  transition: margin-left 0.3s ease;
-  margin-top: 65px;
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 64px;
+  min-height: calc(100vh - 64px);
+  background: #f8fafc;
 }
 
+/* Sidebar open + expanded (256px) */
+.contentShiftedFull {
+  margin-left: 256px;
+}
+
+/* Sidebar open + collapsed (64px) */
 .contentShifted {
-  margin-left: -130px; /* Match new drawer width */
+  margin-left: 64px;
 }
 
-.contentShiftedCollapsed {
-  margin-left: 60px; /* Match new collapsed width */
-}
-
-/* Ensure full width usage */
 .mainContent {
   width: 100%;
   height: calc(100vh - 64px);
-  overflow: hidden;
+  overflow: auto;
 }
 
 @media (max-width: 960px) {

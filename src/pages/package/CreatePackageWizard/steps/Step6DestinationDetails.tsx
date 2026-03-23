@@ -91,10 +91,10 @@ type DestinationFormData = z.infer<typeof destinationSchema>;
 // ── COMPONENT ──────────────────────────────────────────────────────────────
 
 const Step6DestinationDetails: React.FC<Step6Props> = ({
-  formData,
-  updateFormData,
+  formData: _formData,
+  updateFormData: _updateFormData,
   packageId,
-  isEditMode = false,
+  isEditMode: _isEditMode = false,
   loading = false,
   countries,
   cities,

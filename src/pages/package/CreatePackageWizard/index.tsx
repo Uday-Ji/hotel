@@ -9,7 +9,6 @@ import StepPackageDetail from './steps/StepPackageDetail';
 import Step4UploadImages from './steps/Step4UploadImages';
 import Step5ItineraryManage from './steps/Step5ItineraryManage';
 import Step6DestinationDetails from './steps/Step6DestinationDetails';
-import Step7HotelMapping from './steps/Step7HotelMapping';
 import Step8PackageCosting from './steps/Step8PackageCosting';
 import Step9CancellationRules from './steps/Step9CancellationRules';
 import { packageService } from '@/services/package/package.service';
@@ -71,8 +70,7 @@ const CreatePackageWizard: React.FC = () => {
   // Track validity and dirty state for Package Detail tab
   const [packageDetailValid, setPackageDetailValid] = useState(false);
   const [packageDetailDirty, setPackageDetailDirty] = useState(false);
-  const [destinationDetailValid, setDestinationDetailValid] = useState(false);
-  const [hotelMappingValid, setHotelMappingValid] = useState(false);
+  const [, setDestinationDetailValid] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [dropdownsLoading, setDropdownsLoading] = useState(true);
@@ -280,16 +278,8 @@ const CreatePackageWizard: React.FC = () => {
           onValidationChange={setDestinationDetailValid}
         />
       );
-      case 4: return <Step7HotelMapping
-            formData={formData}
-            updateFormData={updateFormData}
-            packageId={packageId || 0}
-            isEditMode={isEditMode}
-            loading={dropdownsLoading}
-            cities={dropdowns.cities}
-            onValidationChange={setHotelMappingValid}
-          />;
-      case 5: return <Step8PackageCosting {...common} />;
+      // case 4: Hotel Mapping step removed; now handled as a master component
+      case 5: return <Step8PackageCosting {...common} packageId={packageId || 0} />;
       case 6: return <Step9CancellationRules {...common} />;
       default: return null;
     }
