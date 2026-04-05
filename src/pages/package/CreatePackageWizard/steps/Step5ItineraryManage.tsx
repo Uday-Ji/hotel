@@ -42,6 +42,7 @@ import { packageService } from '@/services/package/package.service';
 import BatchImageUploader, { ImageRow } from '@/components/common/BatchImageUploader/BatchImageUploader';
 import RichTextEditor from '@/components/common/RichTextEditor/RichTextEditor';
 import FormModal from '@/components/common/FormModal/FormModal';
+
 // Define types inline
 export interface PackageItinerary {
   packageItineraryId: number;
@@ -60,6 +61,7 @@ export interface PackageItinerary {
   imageTag?: string;
   bigImage?: string;
 }
+
 interface PackageImage {
   imageId?: number;
   url?: string;
@@ -68,25 +70,29 @@ interface PackageImage {
   bigImage?: string;
   isActive?: boolean;
 }
+
 export interface PackageTab {
   tabId: number;
   tabName: string;
 }
+
 export interface PackageInclusion {
   id: number;
   inclusionId?: number;
   description: string;
   sequenceNo?: number;
-  specType?: string;
+  specType?: number;
   status?: boolean;
   tabName?: string;
 }
+
 export interface HolidayType {
   holidayTypeID: number;
   holidayTypeCode: string;
   name?: string;
   description?: string;
 }
+
 // Update Step5Props definition:
 interface Step5Props {
   packageId: number;
@@ -122,7 +128,7 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   onValidationChange,
 }) => {
   const [activeTab, setActiveTab] = useState(0);
-  
+
   // Modal states
   const [dayModalOpen, setDayModalOpen] = useState(false);
   const [inclusionModalOpen, setInclusionModalOpen] = useState(false);
@@ -147,16 +153,14 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   // Batch uploader states
   const [selectedItinerary, setSelectedItinerary] = useState<PackageItinerary | null>(null);
   const [uploadingImages, setUploadingImages] = useState(false);
-
-  // Rich text editor states
-  const [itineraryDescription, setItineraryDescription] = useState('');
-  const [inclusionDescription, setInclusionDescription] = useState('');
+  const [editingImage, setEditingImage] = useState<any | null>(null);
 
   // ── Forms ─────────────────────────────────────────────────────────────
   const {
     control: dayControl,
     handleSubmit: handleDaySubmit,
     reset: resetDayForm,
+    watch: watchDay,
     formState: { errors: dayErrors },
   } = useForm<ItineraryDayFormData>({
     resolver: zodResolver(itineraryDaySchema),
@@ -169,16 +173,28 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
     },
   });
 
+  // Watch itinerary description for form control
+  const itineraryDescription = watchDay('description');
+
   const {
     control: inclusionControl,
     handleSubmit: handleInclusionSubmit,
     reset: resetInclusionForm,
     setValue: setInclusionValue,
+    watch: watchInclusion,
     formState: { errors: inclusionErrors },
   } = useForm<InclusionFormData>({
     resolver: zodResolver(inclusionSchema),
-    defaultValues: { description: '', specType: '', sequenceNo: 1, isActive: true },
+    defaultValues: {
+      description: '',
+      specType: '',
+      sequenceNo: 1,
+      isActive: true,
+    },
   });
+
+  // Watch inclusion description for form control
+  const inclusionDescription = watchInclusion('description');
 
   // ── Load data ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -207,18 +223,18 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
     }
   }, [inclusions, editingInclusionId, setInclusionValue]);
 
-  const getHolidayTypeCodes = async (holidayTypeIds: number[] | string): Promise<string> => {
+  const getHolidayTypeCodes = async (
+    holidayTypeIds: number[] | string
+  ): Promise<string> => {
     try {
       if (typeof holidayTypeIds === 'string' && holidayTypeIds.includes(',')) {
         return holidayTypeIds;
       }
 
-      if (typeof holidayTypeIds === 'string') {
-        return holidayTypeIds;
-      }
+      const idsArray = Array.isArray(holidayTypeIds)
+        ? holidayTypeIds
+        : [holidayTypeIds];
 
-      const idsArray = Array.isArray(holidayTypeIds) ? holidayTypeIds : [holidayTypeIds];
-      
       if (idsArray.length === 0) {
         return '';
       }
@@ -233,7 +249,9 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
 
       const codes = idsArray
         .map(id => {
-          const holidayType = holidayTypes.find(ht => ht.holidayTypeID === Number(id));
+          const holidayType = holidayTypes.find(
+            ht => ht.holidayTypeID === Number(id)
+          );
           return holidayType ? holidayType.holidayTypeCode : null;
         })
         .filter(code => code !== null);
@@ -248,11 +266,16 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   const loadAllData = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const holidayTypeCodes = await getHolidayTypeCodes(formData.holidayType);
 
-      const [itinerariesData, citiesData, packageTabsData, inclusionsData] = await Promise.all([
+      const [
+        itinerariesData,
+        citiesData,
+        packageTabsData,
+        inclusionsData,
+      ] = await Promise.all([
         packageService.getPackageItineraries(packageId, 'SMT'),
         packageService.getCitiesList(),
         packageService.getPackageTabList(holidayTypeCodes, 'SMT'),
@@ -262,11 +285,12 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
       setPackageTabs(packageTabsData.data || []);
       setInclusions(inclusionsData.data || []);
       setItineraries(itinerariesData.data || []);
-      setCities(citiesData.map((city: any) => ({
-        id: city.cityId || city.cityCode,
-        name: city.cityName || city.cName,
-      })));
-
+      setCities(
+        citiesData.map((city: any) => ({
+          id: city.cityId || city.cityCode,
+          name: city.cityName || city.cName,
+        }))
+      );
     } catch (err: any) {
       console.error('Load data error:', err);
       setError(err.message || 'Failed to load data');
@@ -284,18 +308,18 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
         days: itinerary.days,
         cityId: String(itinerary.cityId ?? ''),
         briefDesc: itinerary.briefDesc,
+        description: itinerary.description || '',
         isActive: itinerary.isActive,
       });
-      setItineraryDescription(itinerary.description || '');
     } else {
       setEditingDayId(null);
       resetDayForm({
         days: itineraries.length + 1,
         cityId: '',
         briefDesc: '',
+        description: '',
         isActive: true,
       });
-      setItineraryDescription('');
     }
     setDayModalOpen(true);
   };
@@ -303,7 +327,13 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   const closeDayModal = () => {
     setDayModalOpen(false);
     setEditingDayId(null);
-    setItineraryDescription('');
+    resetDayForm({
+      days: 1,
+      cityId: '',
+      briefDesc: '',
+      description: '',
+      isActive: true,
+    });
   };
 
   const onSubmitDay = async (data: ItineraryDayFormData) => {
@@ -318,16 +348,22 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
         cityCode: data.cityId,
         userId: 2,
         briefDescription: data.briefDesc,
-        description: itineraryDescription,
+        description: data.description || '',
         status: data.isActive ? 1 : 0,
       };
 
       const response = await packageService.createPackageItinerary(payload);
-      
+
       if (response.status.success) {
-        setSuccess(editingDayId ? 'Day updated successfully!' : 'Day added successfully!');
+        setSuccess(
+          editingDayId
+            ? 'Day updated successfully!'
+            : 'Day added successfully!'
+        );
         await loadAllData();
         closeDayModal();
+      } else {
+        setError(response.status.message || 'Failed to save day');
       }
     } catch (err: any) {
       console.error('Submit itinerary error:', err);
@@ -338,13 +374,17 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   };
 
   const handleDeleteDay = async (id: number) => {
-    if (!confirm('Delete this day?')) return;
+    if (!confirm('Are you sure you want to delete this day?')) return;
 
     setIsSaving(true);
     try {
-      await packageService.deletePackageItinerary(id);
-      setSuccess('Day deleted successfully!');
-      await loadAllData();
+      const response = await packageService.deletePackageItinerary(id);
+      if (response.status.success || response.status === true) {
+        setSuccess('Day deleted successfully!');
+        await loadAllData();
+      } else {
+        setError(response.status?.message || 'Failed to delete day');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to delete day');
     } finally {
@@ -353,7 +393,6 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   };
 
   // ── Batch Image Uploader for Itinerary Images ─────────────────────────
-  const [editingImage, setEditingImage] = useState<any | null>(null);
   const openImageGallery = (itinerary: PackageItinerary, imageToEdit: any = null) => {
     setSelectedItinerary(itinerary);
     setEditingImage(imageToEdit);
@@ -362,13 +401,17 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   };
 
   const handleBatchUpload = async (row: ImageRow) => {
-    if (!selectedItinerary) throw new Error('No itinerary selected');
+    if (!selectedItinerary)
+      throw new Error('No itinerary selected');
+
     // Only allow upload if both images are present (file or preview)
     const hasThumbnail = row.thumbnailFile || row.thumbnailPreview;
     const hasLarge = row.largeFile || row.largePreview;
+
     if (!hasThumbnail || !hasLarge) {
       throw new Error('Both images are required');
     }
+
     // Convert files to base64 or use previews
     const fileToBase64 = (file: File): Promise<string> => {
       return new Promise((resolve, reject) => {
@@ -378,15 +421,19 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
         reader.onerror = () => reject(new Error('Failed to read file'));
       });
     };
+
     let thumbnailBase64 = '';
     let largeBase64 = '';
+
     // In edit mode, if user does not change the image, keep as null
     if (row.thumbnailFile) {
       thumbnailBase64 = await fileToBase64(row.thumbnailFile);
     }
+
     if (row.largeFile) {
       largeBase64 = await fileToBase64(row.largeFile);
     }
+
     // Build payload for itinerary image upload
     const payload = {
       imageId: editingImage?.imageId || 0,
@@ -398,6 +445,7 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
       status: row.status === 'Active',
       companyCode: 'SMT',
     };
+
     await packageService.uploadItineraryImage(payload);
   };
 
@@ -405,8 +453,10 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
     setUploadingImages(true);
     try {
       await loadAllData();
-      setSuccess(`Successfully uploaded ${rows.length} images!`);
+      setSuccess(`Successfully uploaded ${rows.length} image(s)!`);
       setBatchUploaderOpen(false);
+      setEditingImage(null);
+      setSelectedItinerary(null);
     } catch (err) {
       setError('Some images failed to upload. Please check and try again.');
     } finally {
@@ -415,12 +465,16 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   };
 
   const handleDeleteImage = async (imageId: number) => {
-    if (!confirm('Delete this image?')) return;
+    if (!confirm('Are you sure you want to delete this image?')) return;
 
     try {
-      await packageService.deleteItineraryImage(imageId);
-      setSuccess('Image deleted!');
-      await loadAllData();
+      const response = await packageService.deleteItineraryImage(imageId);
+      if (response.status.success || response.status === true) {
+        setSuccess('Image deleted successfully!');
+        await loadAllData();
+      } else {
+        setError(response.status?.message || 'Failed to delete image');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to delete image');
     }
@@ -434,22 +488,21 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
       resetInclusionForm({
         description: inclusion.description,
         specType: String(inclusion.specType || ''),
-        sequenceNo: inclusion.sequenceNo,
-        isActive: inclusion.status,
+        sequenceNo: inclusion.sequenceNo ?? 1,
+        isActive: inclusion.status ?? true,
       });
-      setInclusionDescription(inclusion.description);
     } else {
       setEditingInclusionId(null);
-      const nextSeq = inclusions.length > 0 
-        ? Math.max(...inclusions.map(inc => inc.sequenceNo ?? 0)) + 1 
-        : 1;
+      const nextSeq =
+        inclusions.length > 0
+          ? Math.max(...inclusions.map(inc => inc.sequenceNo ?? 0)) + 1
+          : 1;
       resetInclusionForm({
         description: '',
         specType: '',
         sequenceNo: nextSeq,
         isActive: true,
       });
-      setInclusionDescription('');
     }
     setInclusionModalOpen(true);
   };
@@ -457,7 +510,12 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   const closeInclusionModal = () => {
     setInclusionModalOpen(false);
     setEditingInclusionId(null);
-    setInclusionDescription('');
+    resetInclusionForm({
+      description: '',
+      specType: '',
+      sequenceNo: 1,
+      isActive: true,
+    });
   };
 
   const onSubmitInclusion = async (data: InclusionFormData) => {
@@ -465,24 +523,36 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
     setError(null);
 
     try {
+      // Validate that description is not empty
+      if (!data.description || data.description.trim().length === 0) {
+        setError('Description is required');
+        setIsSaving(false);
+        return;
+      }
+
       const payload = {
         packageInclusionId: editingInclusionId || 0,
         packageId,
-        specType: data.specType ? parseInt(data.specType) : 0,
+        specType: data.specType ? parseInt(data.specType, 10) : 0,
         userId: 2,
-        description: inclusionDescription,
+        description: data.description,
         sequenceNo: data.sequenceNo,
         status: data.isActive ? 1 : 0,
       };
 
       const response = await packageService.createPackageInclusion(payload);
-      
+
       if (response.status.success) {
-        setSuccess(editingInclusionId ? 'Inclusion updated!' : 'Inclusion added!');
+        setSuccess(
+          editingInclusionId ? 'Inclusion updated!' : 'Inclusion added!'
+        );
         await loadAllData();
         closeInclusionModal();
+      } else {
+        setError(response.status.message || 'Failed to save inclusion');
       }
     } catch (err: any) {
+      console.error('Submit inclusion error:', err);
       setError(err.message || 'Failed to save inclusion');
     } finally {
       setIsSaving(false);
@@ -490,12 +560,16 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   };
 
   const handleDeleteInclusion = async (id: number) => {
-    if (!confirm('Delete this inclusion?')) return;
+    if (!confirm('Are you sure you want to delete this inclusion?')) return;
 
     try {
-      await packageService.deleteInclusion(id);
-      setSuccess('Inclusion deleted!');
-      await loadAllData();
+      const response = await packageService.deleteInclusion(id);
+      if (response.status.success || response.status === true) {
+        setSuccess('Inclusion deleted successfully!');
+        await loadAllData();
+      } else {
+        setError(response.status?.message || 'Failed to delete inclusion');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to delete inclusion');
     }
@@ -514,7 +588,14 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: 400,
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -522,8 +603,15 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
-        
+      <Paper
+        elevation={0}
+        sx={{
+          p: 3,
+          borderRadius: 3,
+          border: '1px solid #e5e7eb',
+          backgroundColor: '#f9fafb',
+        }}
+      >
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
             {error}
@@ -531,13 +619,21 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
         )}
 
         {success && (
-          <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+          <Alert
+            severity="success"
+            sx={{ mb: 2 }}
+            onClose={() => setSuccess(null)}
+          >
             {success}
           </Alert>
         )}
 
         {/* Tabs */}
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, v) => setActiveTab(v)}
+          sx={{ mb: 3 }}
+        >
           <Tab label="Itinerary Days" />
           <Tab label="Inclusions" />
         </Tabs>
@@ -546,8 +642,18 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
         {activeTab === 0 && (
           <Card sx={{ boxShadow: 'none', border: '1px solid #e5e7eb' }}>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: '#1e293b' }}
+                >
                   Itinerary Days ({itineraries.length})
                 </Typography>
                 <Button
@@ -556,9 +662,11 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                   onClick={() => openDayModal()}
                   disabled={!packageId}
                   sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background:
+                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #5568d3 0%, #5a3a7d 100%)',
+                      background:
+                        'linear-gradient(135deg, #5568d3 0%, #5a3a7d 100%)',
                     },
                   }}
                 >
@@ -568,22 +676,46 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
               <Divider sx={{ mb: 2 }} />
 
               {itineraries.length === 0 ? (
-                <Alert severity="info">No days added yet. Click "Add Day" to begin.</Alert>
+                <Alert severity="info">
+                  No days added yet. Click "Add Day" to begin.
+                </Alert>
               ) : (
                 itineraries.map((itinerary: PackageItinerary) => (
                   <Accordion
                     key={itinerary.packageItineraryId}
-                    expanded={expandedDay === itinerary.packageItineraryId}
-                    onChange={() => setExpandedDay(
-                      expandedDay === itinerary.packageItineraryId ? null : itinerary.packageItineraryId
-                    )}
+                    expanded={
+                      expandedDay === itinerary.packageItineraryId
+                    }
+                    onChange={() =>
+                      setExpandedDay(
+                        expandedDay === itinerary.packageItineraryId
+                          ? null
+                          : itinerary.packageItineraryId
+                      )
+                    }
                     sx={{ mb: 1, '&:before': { display: 'none' } }}
                   >
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                        <Chip label={`Day ${itinerary.days}`} color="primary" size="small" />
-                        <Typography sx={{ fontWeight: 600 }}>{itinerary.cityName}</Typography>
-                        <Typography sx={{ color: '#64748b', flex: 1 }} noWrap>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 2,
+                          width: '100%',
+                        }}
+                      >
+                        <Chip
+                          label={`Day ${itinerary.days}`}
+                          color="primary"
+                          size="small"
+                        />
+                        <Typography sx={{ fontWeight: 600 }}>
+                          {itinerary.cityName}
+                        </Typography>
+                        <Typography
+                          sx={{ color: '#64748b', flex: 1 }}
+                          noWrap
+                        >
                           {itinerary.briefDesc}
                         </Typography>
                         <Chip
@@ -592,13 +724,21 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                           color={itinerary.isActive ? 'success' : 'default'}
                         />
                         <Box onClick={(e) => e.stopPropagation()}>
-                          <IconButton size="small" color="primary" onClick={() => openDayModal(itinerary)}>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => openDayModal(itinerary)}
+                          >
                             <EditIcon fontSize="small" />
                           </IconButton>
                           <IconButton
                             size="small"
                             color="error"
-                            onClick={() => handleDeleteDay(itinerary.packageItineraryId)}
+                            onClick={() =>
+                              handleDeleteDay(
+                                itinerary.packageItineraryId
+                              )
+                            }
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>
@@ -607,87 +747,194 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                     </AccordionSummary>
 
                     <AccordionDetails>
-                      <Box 
-                        sx={{ 
-                          color: '#64748b', 
+                      <Box
+                        sx={{
+                          color: '#64748b',
                           mb: 2,
                           '& p': { margin: '0.5em 0' },
                           '& ul, & ol': { paddingLeft: '1.5em' },
                         }}
-                        dangerouslySetInnerHTML={{ 
-                          __html: itinerary.description || 'No description' 
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            itinerary.description || 'No description',
                         }}
                       />
-                      
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                          <ImageIcon fontSize="small" sx={{ mr: 0.5, verticalAlign: 'middle' }} />
+
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          mb: 1,
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ fontWeight: 600 }}
+                        >
+                          <ImageIcon
+                            fontSize="small"
+                            sx={{ mr: 0.5, verticalAlign: 'middle' }}
+                          />
                           Gallery ({itinerary.images?.length || 0})
                         </Typography>
-                        <Button size="small" startIcon={<AddIcon />} onClick={() => openImageGallery(itinerary)}>
+                        <Button
+                          size="small"
+                          startIcon={<AddIcon />}
+                          onClick={() => openImageGallery(itinerary)}
+                        >
                           Add Images
                         </Button>
                       </Box>
 
                       {itinerary.images?.length > 0 && (
-                        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, mt: 1 }}>
+                        <TableContainer
+                          component={Paper}
+                          variant="outlined"
+                          sx={{ borderRadius: 2, mt: 1 }}
+                        >
                           <Table size="small">
                             <TableHead>
                               <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>#</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Thumbnail</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Large Image</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Tag</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Status</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Actions</TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  #
+                                </TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  Thumbnail
+                                </TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  Large Image
+                                </TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  Tag
+                                </TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  Status
+                                </TableCell>
+                                <TableCell
+                                  align="center"
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  Actions
+                                </TableCell>
                               </TableRow>
                             </TableHead>
                             <TableBody>
-                              {itinerary.images.map((img: PackageImage, idx: number) => (
-                                <TableRow key={img.imageId} hover>
-                                  <TableCell sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>{idx + 1}</TableCell>
-                                  <TableCell>
-                                    <img
-                                      src={img.thumbnail || ''}
-                                      alt={img.imageTag}
-                                      style={{ width: 52, height: 38, objectFit: 'cover', borderRadius: 4 }}
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <img
-                                      src={img.bigImage || ''}
-                                      alt={img.imageTag}
-                                      style={{ width: 52, height: 38, objectFit: 'cover', borderRadius: 4 }}
-                                    />
-                                  </TableCell>
-                                  <TableCell sx={{ fontSize: '0.8125rem' }}>{img.imageTag || '—'}</TableCell>
-                                  <TableCell>
-                                    <Chip
-                                      label={img.isActive ? 'Active' : 'Inactive'}
-                                      size="small"
-                                      color={img.isActive ? 'success' : 'default'}
-                                      sx={{ fontSize: '0.75rem' }}
-                                    />
-                                  </TableCell>
-                                  <TableCell align="center">
-                                    <IconButton
-                                      size="small"
-                                      color="primary"
-                                      onClick={() => openImageGallery(itinerary, img)}
-                                      sx={{ mr: 0.5 }}
+                              {itinerary.images.map(
+                                (img: PackageImage, idx: number) => (
+                                  <TableRow
+                                    key={img.imageId}
+                                    hover
+                                  >
+                                    <TableCell
+                                      sx={{
+                                        fontSize: '0.8125rem',
+                                        fontWeight: 600,
+                                      }}
                                     >
-                                      <EditIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton
-                                      size="small"
-                                      color="error"
-                                      onClick={() => handleDeleteImage(img.imageId ?? 0)}
+                                      {idx + 1}
+                                    </TableCell>
+                                    <TableCell>
+                                      <img
+                                        src={img.thumbnail || ''}
+                                        alt={img.imageTag}
+                                        style={{
+                                          width: 52,
+                                          height: 38,
+                                          objectFit: 'cover',
+                                          borderRadius: 4,
+                                        }}
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <img
+                                        src={img.bigImage || ''}
+                                        alt={img.imageTag}
+                                        style={{
+                                          width: 52,
+                                          height: 38,
+                                          objectFit: 'cover',
+                                          borderRadius: 4,
+                                        }}
+                                      />
+                                    </TableCell>
+                                    <TableCell
+                                      sx={{ fontSize: '0.8125rem' }}
                                     >
-                                      <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
+                                      {img.imageTag || '—'}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Chip
+                                        label={
+                                          img.isActive
+                                            ? 'Active'
+                                            : 'Inactive'
+                                        }
+                                        size="small"
+                                        color={
+                                          img.isActive
+                                            ? 'success'
+                                            : 'default'
+                                        }
+                                        sx={{ fontSize: '0.75rem' }}
+                                      />
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      <IconButton
+                                        size="small"
+                                        color="primary"
+                                        onClick={() =>
+                                          openImageGallery(
+                                            itinerary,
+                                            img
+                                          )
+                                        }
+                                        sx={{ mr: 0.5 }}
+                                      >
+                                        <EditIcon fontSize="small" />
+                                      </IconButton>
+                                      <IconButton
+                                        size="small"
+                                        color="error"
+                                        onClick={() =>
+                                          handleDeleteImage(
+                                            img.imageId ?? 0
+                                          )
+                                        }
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              )}
                             </TableBody>
                           </Table>
                         </TableContainer>
@@ -704,7 +951,14 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
         {activeTab === 1 && (
           <Card sx={{ boxShadow: 'none', border: '1px solid #e5e7eb' }}>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box
                     sx={{
@@ -717,13 +971,21 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                       justifyContent: 'center',
                     }}
                   >
-                    <CheckCircleIcon sx={{ color: '#10b981', fontSize: 28 }} />
+                    <CheckCircleIcon
+                      sx={{ color: '#10b981', fontSize: 28 }}
+                    />
                   </Box>
                   <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 700, color: '#1e293b' }}
+                    >
                       Inclusions
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#64748b' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: '#64748b' }}
+                    >
                       What's included in the package price.
                     </Typography>
                   </Box>
@@ -744,42 +1006,70 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
               <Divider sx={{ mb: 2 }} />
 
               {inclusions.length === 0 ? (
-                <Alert severity="info">No inclusions added yet.</Alert>
+                <Alert severity="info">
+                  No inclusions added yet.
+                </Alert>
               ) : (
-                <TableContainer sx={{ border: '1px solid #e5e7eb', borderRadius: 2 }}>
+                <TableContainer
+                  sx={{
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 2,
+                  }}
+                >
                   <Table size="small">
                     <TableHead>
                       <TableRow sx={{ bgcolor: '#f9fafb' }}>
-                        <TableCell sx={{ fontWeight: 700, width: '50%' }}>Description</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
+                        <TableCell sx={{ fontWeight: 700, width: '50%' }}>
+                          Description
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>
+                          Category
+                        </TableCell>
                         <TableCell sx={{ fontWeight: 700 }}>Seq</TableCell>
                         <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>
+                          Actions
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {inclusions
-                        .sort((a, b) => (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0))
+                        .sort(
+                          (a, b) =>
+                            (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0)
+                        )
                         .map((inclusion) => (
-                          <TableRow key={inclusion.inclusionId} hover>
+                          <TableRow
+                            key={inclusion.inclusionId}
+                            hover
+                          >
                             <TableCell>
                               <Box
                                 sx={{
                                   '& p': { margin: '0.25em 0' },
                                   '& ul, & ol': { paddingLeft: '1em' },
                                 }}
-                                dangerouslySetInnerHTML={{ __html: inclusion.description }}
+                                dangerouslySetInnerHTML={{
+                                  __html: inclusion.description,
+                                }}
                               />
                             </TableCell>
                             <TableCell>
                               {inclusion.tabName ? (
-                                <Chip label={inclusion.tabName} size="small" />
+                                <Chip
+                                  label={inclusion.tabName}
+                                  size="small"
+                                />
                               ) : (
                                 '—'
                               )}
                             </TableCell>
                             <TableCell>
-                              <Chip label={inclusion.sequenceNo} size="small" color="primary" />
+                              <Chip
+                                label={inclusion.sequenceNo}
+                                size="small"
+                                color="primary"
+                              />
                             </TableCell>
                             <TableCell>
                               <Box
@@ -787,7 +1077,9 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                                   width: 8,
                                   height: 8,
                                   borderRadius: '50%',
-                                  bgcolor: inclusion.status ? '#10b981' : '#94a3b8',
+                                  bgcolor: inclusion.status
+                                    ? '#10b981'
+                                    : '#94a3b8',
                                   display: 'inline-block',
                                 }}
                               />
@@ -795,14 +1087,23 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                             <TableCell>
                               <IconButton
                                 size="small"
-                                onClick={() => openInclusionModal(inclusion)}
-                                sx={{ color: '#64748b', mr: 0.5 }}
+                                onClick={() =>
+                                  openInclusionModal(inclusion)
+                                }
+                                sx={{
+                                  color: '#64748b',
+                                  mr: 0.5,
+                                }}
                               >
                                 <EditIcon fontSize="small" />
                               </IconButton>
                               <IconButton
                                 size="small"
-                                onClick={() => handleDeleteInclusion(inclusion.inclusionId ?? 0)}
+                                onClick={() =>
+                                  handleDeleteInclusion(
+                                    inclusion.inclusionId ?? 0
+                                  )
+                                }
                                 sx={{ color: '#64748b' }}
                               >
                                 <DeleteIcon fontSize="small" />
@@ -823,7 +1124,11 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
           open={dayModalOpen}
           onClose={closeDayModal}
           onSubmit={handleDaySubmit(onSubmitDay)}
-          title={editingDayId ? 'Edit Itinerary Day' : 'Add Itinerary Day'}
+          title={
+            editingDayId
+              ? 'Edit Itinerary Day'
+              : 'Add Itinerary Day'
+          }
           subtitle="Enter day details and description"
           isSubmitting={isSaving}
           isEditing={!!editingDayId}
@@ -844,7 +1149,11 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                     error={!!dayErrors.days}
                     helperText={dayErrors.days?.message}
                     inputProps={{ min: 1 }}
-                    onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 1)}
+                    onChange={(e) =>
+                      field.onChange(
+                        parseInt(e.target.value, 10) || 1
+                      )
+                    }
                     sx={compactFieldSx}
                   />
                 )}
@@ -887,11 +1196,15 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                     fullWidth
                     label="Status"
                     value={field.value ? 'active' : 'inactive'}
-                    onChange={(e) => field.onChange(e.target.value === 'active')}
+                    onChange={(e) =>
+                      field.onChange(e.target.value === 'active')
+                    }
                     sx={compactFieldSx}
                   >
                     <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="inactive">Inactive</MenuItem>
+                    <MenuItem value="inactive">
+                      Inactive
+                    </MenuItem>
                   </TextField>
                 )}
               />
@@ -907,7 +1220,9 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                     fullWidth
                     label="Brief Description *"
                     error={!!dayErrors.briefDesc}
-                    helperText={dayErrors.briefDesc?.message}
+                    helperText={
+                      dayErrors.briefDesc?.message
+                    }
                     placeholder="e.g., Explore the city highlights"
                     sx={compactFieldSx}
                   />
@@ -916,15 +1231,23 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
             </Grid>
 
             <Grid item xs={12}>
-              <RichTextEditor
-                label="Full Description"
-                value={itineraryDescription}
-                onChange={setItineraryDescription}
-                placeholder="Add detailed description..."
-                toolbarVariant="basic"
-                minHeight={150}
-                showCharCount
-                maxLength={8000}
+              <Controller
+                name="description"
+                control={dayControl}
+                render={({ field }) => (
+                  <Box>
+                    <RichTextEditor
+                      label="Full Description"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Add detailed description..."
+                      toolbarVariant="basic"
+                      minHeight={150}
+                      showCharCount
+                      maxLength={8000}
+                    />
+                  </Box>
+                )}
               />
             </Grid>
           </Grid>
@@ -935,7 +1258,11 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
           open={inclusionModalOpen}
           onClose={closeInclusionModal}
           onSubmit={handleInclusionSubmit(onSubmitInclusion)}
-          title={editingInclusionId ? 'Edit Inclusion' : 'Add Inclusion'}
+          title={
+            editingInclusionId
+              ? 'Edit Inclusion'
+              : 'Add Inclusion'
+          }
           subtitle="What's included in the package"
           isSubmitting={isSaving}
           isEditing={!!editingInclusionId}
@@ -944,15 +1271,43 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
         >
           <Grid container spacing={2.5}>
             <Grid item xs={12}>
-              <RichTextEditor
-                label="Description *"
-                value={inclusionDescription}
-                onChange={setInclusionDescription}
-                placeholder="e.g., Daily Buffet Breakfast"
-                toolbarVariant="minimal"
-                minHeight={100}
-                showCharCount
-                maxLength={500}
+              <Controller
+                name="description"
+                control={inclusionControl}
+                rules={{
+                  required: 'Description is required',
+                  minLength: {
+                    value: 5,
+                    message:
+                      'Description must be at least 5 characters',
+                  },
+                  validate: (value) =>
+                    !value || value.trim().length >= 5 ||
+                    'Description cannot be empty',
+                }}
+                render={({ field }) => (
+                  <Box>
+                    <RichTextEditor
+                      label="Description *"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="e.g., Daily Buffet Breakfast"
+                      toolbarVariant="minimal"
+                      minHeight={100}
+                      showCharCount
+                      maxLength={500}
+                    />
+                    {inclusionErrors.description && (
+                      <Typography
+                        color="error"
+                        variant="caption"
+                        sx={{ mt: 0.5, display: 'block' }}
+                      >
+                        {inclusionErrors.description.message}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
               />
             </Grid>
 
@@ -970,7 +1325,10 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                   >
                     <MenuItem value="">Select Category</MenuItem>
                     {packageTabs.map((tab) => (
-                      <MenuItem key={tab.tabId} value={String(tab.tabId)}>
+                      <MenuItem
+                        key={tab.tabId}
+                        value={String(tab.tabId)}
+                      >
                         {tab.tabName}
                       </MenuItem>
                     ))}
@@ -990,9 +1348,15 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                     label="Sequence"
                     type="number"
                     error={!!inclusionErrors.sequenceNo}
-                    helperText={inclusionErrors.sequenceNo?.message}
+                    helperText={
+                      inclusionErrors.sequenceNo?.message
+                    }
                     inputProps={{ min: 0 }}
-                    onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
+                    onChange={(e) =>
+                      field.onChange(
+                        parseInt(e.target.value, 10) || 0
+                      )
+                    }
                     sx={compactFieldSx}
                   />
                 )}
@@ -1010,11 +1374,15 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                     fullWidth
                     label="Status"
                     value={field.value ? 'active' : 'inactive'}
-                    onChange={(e) => field.onChange(e.target.value === 'active')}
+                    onChange={(e) =>
+                      field.onChange(e.target.value === 'active')
+                    }
                     sx={compactFieldSx}
                   >
                     <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="inactive">Inactive</MenuItem>
+                    <MenuItem value="inactive">
+                      Inactive
+                    </MenuItem>
                   </TextField>
                 )}
               />
@@ -1025,10 +1393,17 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
         {/* Batch Image Uploader Modal for Itinerary Images */}
         <FormModal
           open={batchUploaderOpen}
-          onClose={() => { setBatchUploaderOpen(false); setEditingImage(null); }}
+          onClose={() => {
+            setBatchUploaderOpen(false);
+            setEditingImage(null);
+          }}
           onSubmit={() => {}}
           title={`Upload Images - Day ${selectedItinerary?.days}`}
-          subtitle={editingImage ? 'Edit image details' : 'Add images for this itinerary day'}
+          subtitle={
+            editingImage
+              ? 'Edit image details'
+              : 'Add images for this itinerary day'
+          }
           isSubmitting={uploadingImages}
           icon={<ImageIcon />}
           primaryColor="#f59e0b"
@@ -1039,17 +1414,31 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
             key={batchUploaderKey}
             onUploadRow={handleBatchUpload}
             onUploadComplete={handleBatchComplete}
-            tagSuggestions={['gallery', 'itinerary', 'sight', 'activity']}
+            tagSuggestions={[
+              'gallery',
+              'itinerary',
+              'sight',
+              'activity',
+            ]}
             title=""
             subtitle=""
-            initialRows={editingImage ? [{
-              thumbnailFile: null,
-              largeFile: null,
-              tag: editingImage.imageTag || '',
-              status: editingImage.isActive ? 'Active' : 'Inactive',
-              thumbnailUrl: editingImage.thumbnail || '',
-              largeImageUrl: editingImage.bigImage || '',
-            }] : undefined}
+            initialRows={
+              editingImage
+                ? [
+                    {
+                      thumbnailFile: null,
+                      largeFile: null,
+                      tag: editingImage.imageTag || '',
+                      status: editingImage.isActive
+                        ? 'Active'
+                        : 'Inactive',
+                      thumbnailUrl:
+                        editingImage.thumbnail || '',
+                      largeImageUrl: editingImage.bigImage || '',
+                    },
+                  ]
+                : undefined
+            }
           />
         </FormModal>
       </Paper>

@@ -34,7 +34,6 @@ const TABS = [
   'Upload Images',
   'Itinerary',
   'Destination',
-  'Hotel Mapping',
   'Package Costing',
   'Cancellation Rules',
 ];
@@ -279,8 +278,8 @@ const CreatePackageWizard: React.FC = () => {
         />
       );
       // case 4: Hotel Mapping step removed; now handled as a master component
-      case 5: return <Step8PackageCosting {...common} packageId={packageId || 0} />;
-      case 6: return <Step9CancellationRules {...common} />;
+      case 4: return <Step8PackageCosting {...common} packageId={packageId || 0} />;
+      case 5: return <Step9CancellationRules {...common} />;
       default: return null;
     }
   };
