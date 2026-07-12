@@ -210,6 +210,50 @@ class PackageService {
       console.warn('Failed to fetch TabsTypeList, returning empty array:', error);
       return [];
     }
+
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // MappingMaster / Holiday Tab Endpoints
+  // ───────────────────────────────────────────────────────────────────────────
+
+  async getHolidayCategoryTypes(): Promise<any[]> {
+    const res = await apiClient.post<ApiResponse<any[]>>(
+      '/MappingMaster/GetHolidayCategoryTypes', { companyCode: this.cc },
+    );
+    return res.data.data;
+  }
+
+  async postHolidayCategoryTypes(payload: any): Promise<any> {
+    const data = { ...payload, companyCode: this.cc };
+    const res = await apiClient.post('/MappingMaster/PostHolidayCategoryTypes', data);
+    return res.data;
+  }
+
+  async getHolidayTabs(): Promise<any[]> {
+    const res = await apiClient.post<ApiResponse<any[]>>(
+      '/MappingMaster/GetHolidayTabs', { companyCode: this.cc },
+    );
+    return res.data.data;
+  }
+
+  async postHolidayTab(payload: any): Promise<any> {
+    const data = { ...payload, companyCode: this.cc };
+    const res = await apiClient.post('/MappingMaster/PostHolidayTab', data);
+    return res.data;
+  }
+
+  async getHolidayTypeTabMappings(): Promise<any[]> {
+    const res = await apiClient.post<ApiResponse<any[]>>(
+      '/MappingMaster/GetHolidayTypeTabMappings', { companyCode: this.cc },
+    );
+    return res.data.data;
+  }
+
+  async postHolidayTypeTabMapping(payload: any): Promise<any> {
+    const data = { ...payload, companyCode: this.cc };
+    const res = await apiClient.post('/MappingMaster/PostHolidayTypeTabMapping', data);
+    return res.data;
   }
 
   async createTabsType(data: any): Promise<any> {
@@ -454,6 +498,23 @@ class PackageService {
       companyCode,
     });
     return response.data;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Default Cancellation Policy Endpoints
+  // ───────────────────────────────────────────────────────────────────────────
+
+  async getPackageDefaultCancellationPolicy(): Promise<any[]> {
+    const res = await apiClient.post<ApiResponse<any[]>>(
+      '/Package/GetPackageDefaultCancellationPolicy', { companyCode: this.cc },
+    );
+    return res.data.data;
+  }
+
+  async postPackageDefaultCancellationPolicy(payload: any): Promise<any> {
+    const data = { ...payload, companyCode: this.cc };
+    const res = await apiClient.post('/Package/PostPackageDefaultCancellationPolicy', data);
+    return res.data;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

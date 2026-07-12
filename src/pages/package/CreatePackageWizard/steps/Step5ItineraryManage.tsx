@@ -160,7 +160,7 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
     control: dayControl,
     handleSubmit: handleDaySubmit,
     reset: resetDayForm,
-    watch: watchDay,
+    
     formState: { errors: dayErrors },
   } = useForm<ItineraryDayFormData>({
     resolver: zodResolver(itineraryDaySchema),
@@ -174,14 +174,13 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   });
 
   // Watch itinerary description for form control
-  const itineraryDescription = watchDay('description');
 
   const {
     control: inclusionControl,
     handleSubmit: handleInclusionSubmit,
     reset: resetInclusionForm,
     setValue: setInclusionValue,
-    watch: watchInclusion,
+    
     formState: { errors: inclusionErrors },
   } = useForm<InclusionFormData>({
     resolver: zodResolver(inclusionSchema),
@@ -194,7 +193,7 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
   });
 
   // Watch inclusion description for form control
-  const inclusionDescription = watchInclusion('description');
+
 
   // ── Load data ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1238,7 +1237,7 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                   <Box>
                     <RichTextEditor
                       label="Full Description"
-                      value={field.value}
+                      value={field.value ?? ''}
                       onChange={field.onChange}
                       placeholder="Add detailed description..."
                       toolbarVariant="basic"
@@ -1289,7 +1288,7 @@ const Step5ItineraryManage: React.FC<Step5Props> = ({
                   <Box>
                     <RichTextEditor
                       label="Description *"
-                      value={field.value}
+                      value={field.value ?? ''}
                       onChange={field.onChange}
                       placeholder="e.g., Daily Buffet Breakfast"
                       toolbarVariant="minimal"

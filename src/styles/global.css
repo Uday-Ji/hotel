@@ -24,6 +24,37 @@ body {
   min-height: 100vh;
 }
 
+/* Date picker selection styling */
+.MuiPickersDay-root.MuiPickersDay-selected,
+.MuiPickersDay-selected,
+.MuiPickersDay-root.Mui-selected,
+.MuiDateRangePickerDay-root.MuiPickersDay-selected,
+.MuiDateRangePickerDay-selected,
+.MuiDateRangePickerDay-root.Mui-selected,
+.MuiPickersDay-root.MuiPickersDay-dayStartOfRange,
+.MuiPickersDay-root.MuiPickersDay-dayEndOfRange,
+.MuiDateRangePickerDay-root.MuiPickersDay-dayStartOfRange,
+.MuiDateRangePickerDay-root.MuiPickersDay-dayEndOfRange,
+.MuiPickersDay-root.MuiPickersDay-dayWithinRange,
+.MuiDateRangePickerDay-root.MuiPickersDay-dayWithinRange {
+  background-color: #dc004e !important;
+  color: #fff !important;
+}
+
+.MuiPickersDay-root.MuiPickersDay-selected:hover,
+.MuiPickersDay-selected:hover,
+.MuiDateRangePickerDay-root.MuiPickersDay-selected:hover,
+.MuiDateRangePickerDay-selected:hover {
+  background-color: #b0003a !important;
+}
+
+.MuiPickersDay-root.MuiPickersDay-dayWithinRange,
+.MuiDateRangePickerDay-root.MuiPickersDay-dayWithinRange,
+.MuiPickersDay-dayWithinRange,
+.MuiDateRangePickerDay-dayWithinRange {
+  background-color: rgba(220, 0, 78, 0.16) !important;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;

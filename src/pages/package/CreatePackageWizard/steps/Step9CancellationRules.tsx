@@ -37,6 +37,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { CreatePackageRequest } from '@/services/package/package.models';
+import { packageService } from '@/services/package/package.service';
 
 interface Step9Props {
   formData: Partial<CreatePackageRequest>;
@@ -62,6 +63,7 @@ const compactFieldSx = {
 const Step9CancellationRules: React.FC<Step9Props> = ({ formData, updateFormData, onValidationChange }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const { control, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CancellationFormData>({
     resolver: zodResolver(cancellationSchema),
@@ -74,12 +76,49 @@ const Step9CancellationRules: React.FC<Step9Props> = ({ formData, updateFormData
     onValidationChange?.(true); // cancellation rules are optional
   }, [onValidationChange]);
 
+  useEffect(() => {
+    if (success) {
+      const t = setTimeout(() => setSuccess(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [success]);
+
+  // If package has no cancellation rules, load default cancellation policy
+  useEffect(() => {
+    const loadDefaults = async () => {
+      try {
+        if (!formData.cancellationRules || formData.cancellationRules.length === 0) {
+          const res = await packageService.getPackageDefaultCancellationPolicy();
+          if (res && Array.isArray(res) && res.length > 0) {
+            const mapped = res.map((r: any) => ({
+              id: r.id ?? Date.now(),
+              condition: (r.condition || '').toString().toLowerCase() === 'before' ? 'before' : 'after',
+              daysFrom: Number(r.dayfrom ?? r.daysFrom ?? 0),
+              amount: Number(r.amount ?? 0),
+              amountType: (r.cancellationAmountType || '').toString().toLowerCase().startsWith('p') ? 'percentage' : 'fixed',
+              chargeType: (r.chargeType || '').toString().toLowerCase().includes('booking') ? 'perBooking' : 'perPerson',
+              isActive: r.isActive === 1 || r.isActive === true,
+            }));
+            updateFormData({ cancellationRules: mapped as any });
+          }
+        }
+      } catch (err) {
+        // ignore failures silently; defaults are optional
+        console.warn('Failed to load default cancellation policy:', err);
+      }
+    };
+
+    loadDefaults();
+    // run only on mount or when formData.cancellationRules changes
+  }, [formData.cancellationRules, updateFormData]);
+
   const onSubmit = (data: CancellationFormData) => {
     const newRule: any = { ...data, id: isEditing ? editingId : Date.now() };
     const updatedRules = isEditing && editingId
       ? (formData.cancellationRules || []).map((r: any) => r.id === editingId ? newRule : r)
       : [...(formData.cancellationRules || []), newRule];
     updateFormData({ cancellationRules: updatedRules });
+    setSuccess(isEditing ? 'Cancellation rule updated' : 'Cancellation rule added');
     handleCancel();
   };
 
@@ -96,6 +135,7 @@ const Step9CancellationRules: React.FC<Step9Props> = ({ formData, updateFormData
 
   const handleDelete = (id: number) => {
     updateFormData({ cancellationRules: (formData.cancellationRules || []).filter((r: any) => r.id !== id) });
+    setSuccess('Cancellation rule deleted');
   };
 
   const handleCancel = () => {
@@ -119,6 +159,12 @@ const Step9CancellationRules: React.FC<Step9Props> = ({ formData, updateFormData
             <Chip label="Optional" size="small" sx={{ ml: 1.5, bgcolor: '#f0fdf4', color: '#16a34a', fontSize: '0.7rem' }} />
           </Box>
           <Divider sx={{ mb: 2 }} />
+
+          {success && (
+            <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+              {success}
+            </Alert>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <Grid container spacing={2.5}>

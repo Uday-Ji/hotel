@@ -1,6 +1,6 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
 
-const themeOptions: ThemeOptions = {
+const themeOptions = {
   palette: {
     primary: {
       main: '#1976d2',
@@ -85,8 +85,45 @@ const themeOptions: ThemeOptions = {
         },
       },
     },
+    MuiPickersDay: {
+      styleOverrides: {
+        root: {
+          '&.Mui-selected': {
+            backgroundColor: '#dc004e',
+            color: '#fff',
+          },
+          '&.Mui-selected:hover': {
+            backgroundColor: '#b0003a',
+          },
+          '&.MuiPickersDay-rangeStart, &.MuiPickersDay-rangeEnd': {
+            backgroundColor: '#dc004e',
+            color: '#fff',
+          },
+          '&.MuiPickersDay-dayInsideRange': {
+            backgroundColor: 'rgba(220, 0, 78, 0.16)',
+          },
+        },
+      },
+    },
+    MuiDateRangePickerDay: {
+      styleOverrides: {
+        root: {
+          '&.Mui-selected': {
+            backgroundColor: '#dc004e',
+            color: '#fff',
+          },
+          '&.MuiPickersDay-rangeStart, &.MuiPickersDay-rangeEnd': {
+            backgroundColor: '#dc004e',
+            color: '#fff',
+          },
+          '&.MuiPickersDay-dayInsideRange': {
+            backgroundColor: 'rgba(220, 0, 78, 0.16)',
+          },
+        },
+      },
+    },
   },
-};
+} as unknown as ThemeOptions;
 
 export const theme = createTheme(themeOptions);
 
